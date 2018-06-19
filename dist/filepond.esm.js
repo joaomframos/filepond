@@ -6887,8 +6887,7 @@ const createAppAtElement = (element, options = {}) => {
 };
 
 // if an element is passed, we create the instance at that element, if not, we just create an up object
-const createApp = (...args) =>
-  isNode(args[0]) ? createAppAtElement(...args) : createAppObject(...args);
+const createApp = (...args) => createAppAtElement(...args);
 
 const PRIVATE_METHODS$1 = ['fire', '_read', '_write'];
 

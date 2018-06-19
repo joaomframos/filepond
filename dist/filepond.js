@@ -8111,9 +8111,7 @@ function signature:
 
   // if an element is passed, we create the instance at that element, if not, we just create an up object
   var createApp = function createApp() {
-    return isNode(arguments.length <= 0 ? undefined : arguments[0])
-      ? createAppAtElement.apply(undefined, arguments)
-      : createAppObject.apply(undefined, arguments);
+    return createAppAtElement.apply(undefined, arguments);
   };
 
   var PRIVATE_METHODS$1 = ['fire', '_read', '_write'];
