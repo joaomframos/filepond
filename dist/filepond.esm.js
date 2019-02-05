@@ -1,22 +1,20 @@
 /*
- * FilePond 4.0.1
+ * FilePond 1.8.0
  * Licensed under MIT, https://opensource.org/licenses/MIT
  * Please visit https://pqina.nl/filepond for details.
  */
-
-/* eslint-disable */
 const isNode = value => value instanceof HTMLElement;
 
 const createStore = (initialState, queries = [], actions = []) => {
   // internal state
-  const state = Object.assign({}, initialState);
+  const state = babelHelpers.extends({}, initialState);
 
   // contains all actions for next frame, is clear when actions are requested
   const actionQueue = [];
   const dispatchQueue = [];
 
   // returns a duplicate of the current state
-  const getState = () => Object.assign({}, state);
+  const getState = () => babelHelpers.extends({}, state);
 
   // returns a duplicate of the actions array and clears the actions array
   const processActionQueue = () => {
@@ -79,12 +77,12 @@ const createStore = (initialState, queries = [], actions = []) => {
 
   let queryHandles = {};
   queries.forEach(query => {
-    queryHandles = Object.assign({}, query(state), queryHandles);
+    queryHandles = babelHelpers.extends({}, query(state), queryHandles);
   });
 
   let actionHandlers = {};
   actions.forEach(action => {
-    actionHandlers = Object.assign(
+    actionHandlers = babelHelpers.extends(
       {},
       action(dispatch, query, state),
       actionHandlers
@@ -99,7 +97,7 @@ const defineProperty = (obj, property, definition) => {
     obj[property] = definition;
     return;
   }
-  Object.defineProperty(obj, property, Object.assign({}, definition));
+  Object.defineProperty(obj, property, babelHelpers.extends({}, definition));
 };
 
 const forin = (obj, cb) => {
@@ -162,6 +160,8 @@ const appendChild = parent => (child, index) => {
 };
 
 const appendChildView = (parent, childViews) => (view, index) => {
+  // todo: expand with location and target option (child, 'before', target)
+
   if (typeof index !== 'undefined') {
     childViews.splice(index, 0, view);
   } else {
@@ -191,7 +191,7 @@ const getViewRect = (elementRect, childViews, offset, scale) => {
 
   const rect = {
     // the rectangle of the element itself
-    element: Object.assign({}, elementRect),
+    element: babelHelpers.extends({}, elementRect),
 
     // the rectangle of the element expanded to contain its children, does not include any margins
     inner: {
@@ -216,8 +216,8 @@ const getViewRect = (elementRect, childViews, offset, scale) => {
     .filter(childView => !childView.isRectIgnored())
     .map(childView => childView.rect)
     .forEach(childViewRect => {
-      expandRect(rect.inner, Object.assign({}, childViewRect.inner));
-      expandRect(rect.outer, Object.assign({}, childViewRect.outer));
+      expandRect(rect.inner, babelHelpers.extends({}, childViewRect.inner));
+      expandRect(rect.outer, babelHelpers.extends({}, childViewRect.outer));
     });
 
   // calculate inner width and height
@@ -335,12 +335,6 @@ const spring =
           position = value;
         }
 
-        // next target value will not be animated to
-        if (target === null) {
-          target = value;
-          position = value;
-        }
-
         // let start moving to target
         target = value;
 
@@ -411,10 +405,10 @@ const tween =
           api.onupdate((t >= 0 ? easing(reverse ? 1 - p : p) : 0) * target);
         } else {
           t = 1;
+          resting = true;
           p = reverse ? 0 : 1;
           api.onupdate(p * target);
           api.oncomplete(p * target);
-          resting = true;
         }
       };
 
@@ -476,7 +470,7 @@ const createAnimator = (definition, category, property) => {
       : definition[category] || definition;
 
   const type = typeof def === 'string' ? def : def.type;
-  const props = typeof def === 'object' ? Object.assign({}, def) : {};
+  const props = typeof def === 'object' ? babelHelpers.extends({}, def) : {};
 
   return animator[type] ? animator[type](props) : null;
 };
@@ -507,7 +501,9 @@ const addGetSet = (keys, obj, props, overwrite = false) => {
   });
 };
 
-const isDefined = value => value != null;
+const isEmpty = value => value == null;
+
+const isDefined = value => !isEmpty(value);
 
 // add to state,
 // add getters and setters to internal and external api (if not set)
@@ -521,7 +517,7 @@ const animations = ({
   viewState
 }) => {
   // initial properties
-  const initialProps = Object.assign({}, viewProps);
+  const initialProps = babelHelpers.extends({}, viewProps);
 
   // list of all active animations
   const animations = [];
@@ -567,10 +563,10 @@ const animations = ({
     write: ts => {
       let resting = true;
       animations.forEach(animation => {
+        animation.interpolate(ts);
         if (!animation.resting) {
           resting = false;
         }
-        animation.interpolate(ts);
       });
       return resting;
     },
@@ -648,9 +644,7 @@ const defaults = {
   translateY: 0,
   rotateX: 0,
   rotateY: 0,
-  rotateZ: 0,
-  originX: 0,
-  originY: 0
+  rotateZ: 0
 };
 
 const styles = ({
@@ -661,7 +655,7 @@ const styles = ({
   view
 }) => {
   // initial props
-  const initialProps = Object.assign({}, viewProps);
+  const initialProps = babelHelpers.extends({}, viewProps);
 
   // current props
   const currentProps = {};
@@ -702,7 +696,7 @@ const styles = ({
       applyStyles(view.element, viewProps);
 
       // store new transforms
-      Object.assign(currentProps, Object.assign({}, viewProps));
+      Object.assign(currentProps, ...viewProps);
 
       // no longer busy
       return true;
@@ -731,7 +725,6 @@ const applyStyles = (
   element,
   {
     opacity,
-    perspective,
     translateX,
     translateY,
     scaleX,
@@ -739,93 +732,72 @@ const applyStyles = (
     rotateX,
     rotateY,
     rotateZ,
-    originX,
-    originY,
-    width,
     height
   }
 ) => {
-  let transforms = '';
-  let styles = '';
-
-  // handle transform origin
-  if (isDefined(originX) || isDefined(originY)) {
-    styles += `transform-origin: ${originX || 0}px ${originY || 0}px;`;
-  }
+  const transforms = [];
+  const styles = [];
 
   // transform order is relevant
-  // 0. perspective
-  if (isDefined(perspective)) {
-    transforms += `perspective(${perspective}px) `;
-  }
 
   // 1. translate
   if (isDefined(translateX) || isDefined(translateY)) {
-    transforms += `translate3d(${translateX || 0}px, ${translateY || 0}px, 0) `;
+    transforms.push(
+      `translate3d(${translateX || 0}px, ${translateY || 0}px, 0)`
+    );
   }
 
   // 2. scale
   if (isDefined(scaleX) || isDefined(scaleY)) {
-    transforms += `scale3d(${isDefined(scaleX) ? scaleX : 1}, ${
-      isDefined(scaleY) ? scaleY : 1
-    }, 1) `;
+    transforms.push(
+      `scale3d(${isDefined(scaleX) ? scaleX : 1}, ${
+        isDefined(scaleY) ? scaleY : 1
+      }, 1)`
+    );
   }
 
   // 3. rotate
-  if (isDefined(rotateZ)) {
-    transforms += `rotateZ(${rotateZ}rad) `;
-  }
-
-  if (isDefined(rotateX)) {
-    transforms += `rotateX(${rotateX}rad) `;
-  }
-
-  if (isDefined(rotateY)) {
-    transforms += `rotateY(${rotateY}rad) `;
+  if (isDefined(rotateZ) || isDefined(rotateY) || isDefined(rotateX)) {
+    transforms.push(
+      `rotate3d(${rotateX || 0}, ${rotateY || 0}, ${rotateZ || 0}, 360deg)`
+    );
   }
 
   // add transforms
   if (transforms.length) {
-    styles += `transform:${transforms};`;
+    styles.push(`transform:${transforms.join(' ')}`);
   }
 
   // add opacity
   if (isDefined(opacity)) {
-    styles += `opacity:${opacity};`;
+    styles.push(`opacity:${opacity}`);
 
     // if we reach zero, we make the element inaccessible
     if (opacity === 0) {
-      styles += `visibility:hidden;`;
+      styles.push('visibility:hidden');
     }
 
     // if we're below 100% opacity this element can't be clicked
     if (opacity < 1) {
-      styles += `pointer-events:none;`;
+      styles.push('pointer-events:none;');
     }
   }
 
   // add height
   if (isDefined(height)) {
-    styles += `height:${height}px;`;
-  }
-
-  // add width
-  if (isDefined(width)) {
-    styles += `width:${width}px;`;
+    styles.push(`height:${height}px`);
   }
 
   // apply styles
-  const elementCurrentStyle = element.elementCurrentStyle || '';
+  const currentStyles = element.getAttribute('style') || '';
+  const newStyles = styles.join(';');
 
   // if new styles does not match current styles, lets update!
   if (
-    styles.length !== elementCurrentStyle.length ||
-    styles !== elementCurrentStyle
+    newStyles.length !== currentStyles.length ||
+    newStyles !== currentStyles
   ) {
-    element.setAttribute('style', styles);
-    // store current styles so we can compare them to new styles later on
-    // _not_ getting the style attribute is faster
-    element.elementCurrentStyle = styles;
+    element.setAttribute('style', newStyles);
   }
 };
 
@@ -837,14 +809,11 @@ const Mixins = {
 };
 
 const updateRect = (rect = {}, element = {}, style = {}) => {
-  if (!element.layoutCalculated) {
-    rect.paddingTop = parseInt(style.paddingTop, 10) || 0;
-    rect.marginTop = parseInt(style.marginTop, 10) || 0;
-    rect.marginRight = parseInt(style.marginRight, 10) || 0;
-    rect.marginBottom = parseInt(style.marginBottom, 10) || 0;
-    rect.marginLeft = parseInt(style.marginLeft, 10) || 0;
-    element.layoutCalculated = true;
-  }
+  rect.paddingTop = parseInt(style.paddingTop, 10) || 0;
+  rect.marginTop = parseInt(style.marginTop, 10) || 0;
+  rect.marginRight = parseInt(style.marginRight, 10) || 0;
+  rect.marginBottom = parseInt(style.marginBottom, 10) || 0;
+  rect.marginLeft = parseInt(style.marginLeft, 10) || 0;
 
   rect.left = element.offsetLeft || 0;
   rect.top = element.offsetTop || 0;
@@ -878,11 +847,9 @@ const createView =
     // hooks
     filterFrameActionsForChild = (child, actions) => actions,
     didCreateView = () => {},
-    didWriteView = () => {},
 
     // rect related
     ignoreRect = false,
-    ignoreRectUpdate = false,
 
     // mixins
     mixins = []
@@ -901,9 +868,6 @@ const createView =
     // element rectangle
     const rect = updateRect();
     let frameRect = null;
-
-    // rest state
-    let isResting = false;
 
     // pretty self explanatory
     const childViews = [];
@@ -954,21 +918,18 @@ const createView =
       // read child views
       childViews.forEach(child => child._read());
 
-      const shouldUpdate = !(ignoreRectUpdate && rect.width && rect.height);
-      if (shouldUpdate) {
-        updateRect(rect, element, style);
-      }
+      // update my rectangle
+      updateRect(rect, element, style);
 
-      // readers
-      const api = { root: internalAPI, props, rect };
-      readers.forEach(reader => reader(api));
+      // writers
+      readers.forEach(reader => reader({ root: internalAPI, props, rect }));
     };
 
     /**
      * Write data to DOM
      * @private
      */
-    const _write = (ts, frameActions, shouldOptimize) => {
+    const _write = (ts, frameActions = []) => {
       // if no actions, we assume that the view is resting
       let resting = frameActions.length === 0;
 
@@ -978,8 +939,7 @@ const createView =
           props,
           root: internalAPI,
           actions: frameActions,
-          timestamp: ts,
-          shouldOptimize
+          timestamp: ts
         });
         if (writerResting === false) {
           resting = false;
@@ -1000,8 +960,7 @@ const createView =
         // if a child view is not resting, we are not resting
         const childResting = child._write(
           ts,
-          filterFrameActionsForChild(child, frameActions),
-          shouldOptimize
+          filterFrameActionsForChild(child, frameActions)
         );
         if (!childResting) {
           resting = false;
@@ -1010,13 +969,8 @@ const createView =
 
       // append new elements to DOM and update those
       childViews
-        //.filter(child => !child.element.parentNode)
+        .filter(child => !child.element.parentNode)
         .forEach((child, index) => {
-          // skip
-          if (child.element.parentNode) {
-            return;
-          }
-
           // append to DOM
           internalAPI.appendChild(child.element, index);
 
@@ -1024,25 +978,11 @@ const createView =
           child._read();
 
           // re-call write
-          child._write(
-            ts,
-            filterFrameActionsForChild(child, frameActions),
-            shouldOptimize
-          );
+          child._write(ts, filterFrameActionsForChild(child, frameActions));
 
           // we just added somthing to the dom, no rest
           resting = false;
         });
-
-      // update resting state
-      isResting = resting;
-
-      didWriteView({
-        props,
-        root: internalAPI,
-        actions: frameActions,
-        timestamp: ts
-      });
 
       // let parent know if we are resting
       return resting;
@@ -1050,9 +990,7 @@ const createView =
 
     const _destroy = () => {
       activeMixins.forEach(mixin => mixin.destroy());
-      destroyers.forEach(destroyer => {
-        destroyer({ root: internalAPI, props });
-      });
+      destroyers.forEach(destroyer => destroyer({ root: internalAPI }));
       childViews.forEach(child => child._destroy());
     };
 
@@ -1070,38 +1008,33 @@ const createView =
     };
 
     // private API definition
-    const internalAPIDefinition = Object.assign({}, sharedAPIDefinition, {
-      rect: {
-        get: getRect
-      },
+    const internalAPIDefinition = babelHelpers.extends(
+      {},
+      sharedAPIDefinition,
+      {
+        rect: {
+          get: getRect
+        },
 
-      // access to custom children references
-      ref: {
-        get: getReference
-      },
+        // access to custom children references
+        ref: {
+          get: getReference
+        },
 
-      // dom modifiers
-      is: needle => name === needle,
-      appendChild: appendChild(element),
-      createChildView: createChildView(store),
-      linkView: view => {
-        childViews.push(view);
-        return view;
-      },
-      unlinkView: view => {
-        childViews.splice(childViews.indexOf(view), 1);
-      },
-      appendChildView: appendChildView(element, childViews),
-      removeChildView: removeChildView(element, childViews),
-      registerWriter: writer => writers.push(writer),
-      registerReader: reader => readers.push(reader),
-      registerDestroyer: destroyer => destroyers.push(destroyer),
-      invalidateLayout: () => (element.layoutCalculated = false),
+        // dom modifiers
+        is: needle => name === needle,
+        appendChild: appendChild(element),
+        createChildView: createChildView(store),
+        appendChildView: appendChildView(element, childViews),
+        removeChildView: removeChildView(element, childViews),
+        registerWriter: writer => writers.push(writer),
+        registerReader: reader => readers.push(reader),
 
-      // access to data store
-      dispatch: store.dispatch,
-      query: store.query
-    });
+        // access to data store
+        dispatch: store.dispatch,
+        query: store.query
+      }
+    );
 
     // public view API methods
     const externalAPIDefinition = {
@@ -1114,9 +1047,6 @@ const createView =
       rect: {
         get: getRect
       },
-      resting: {
-        get: () => isResting
-      },
       isRectIgnored: () => ignoreRect,
       _read,
       _write,
@@ -1124,7 +1054,7 @@ const createView =
     };
 
     // mixin API methods
-    const mixinAPIDefinition = Object.assign({}, sharedAPIDefinition, {
+    const mixinAPIDefinition = babelHelpers.extends({}, sharedAPIDefinition, {
       rect: {
         get: () => rect
       }
@@ -1178,23 +1108,7 @@ const createView =
     return createObject(externalAPIDefinition, props);
   };
 
-const createPainter = (read, write, fps = 60) => {
-  const name = '__framePainter';
-
-  // set global painter
-  if (window[name]) {
-    window[name].readers.push(read);
-    window[name].writers.push(write);
-    return;
-  }
-
-  window[name] = {
-    readers: [read],
-    writers: [write]
-  };
-
-  const painter = window[name];
-
+const createPainter = (update, fps = 60) => {
   const interval = 1000 / fps;
   let last = null;
   let frame = null;
@@ -1219,8 +1133,7 @@ const createPainter = (read, write, fps = 60) => {
     last = ts - delta % interval;
 
     // update view
-    painter.readers.forEach(read => read());
-    painter.writers.forEach(write => write(ts));
+    update(ts);
   };
 
   tick(performance.now());
@@ -1232,31 +1145,25 @@ const createPainter = (read, write, fps = 60) => {
   };
 };
 
-const createRoute = (routes, fn) => ({
-  root,
-  props,
-  actions = [],
-  timestamp,
-  shouldOptimize
-}) => {
+const createUpdater = (apps, reader, writer) => ts => {
+  // all reads first (as these are free at the start of the frame)
+  apps.forEach(app => app[reader]());
+
+  // now update the DOM
+  apps.forEach(app => app[writer](ts));
+};
+
+const createRoute = routes => ({ root, props, actions = [] }) => {
   actions
     .filter(action => routes[action.type])
     .forEach(action =>
-      routes[action.type]({
-        root,
-        props,
-        action: action.data,
-        timestamp,
-        shouldOptimize
-      })
+      routes[action.type]({ root, props, action: action.data })
     );
-  if (fn) {
-    fn({ root, props, actions, timestamp, shouldOptimize });
-  }
 };
 
-const insertBefore = (newNode, referenceNode) =>
-  referenceNode.parentNode.insertBefore(newNode, referenceNode);
+const insertBefore = (newNode, referenceNode) => {
+  return referenceNode.parentNode.insertBefore(newNode, referenceNode);
+};
 
 const insertAfter = (newNode, referenceNode) => {
   return referenceNode.parentNode.insertBefore(
@@ -1266,8 +1173,6 @@ const insertAfter = (newNode, referenceNode) => {
 };
 
 const isArray = value => Array.isArray(value);
-
-const isEmpty = value => value == null;
 
 const trim = str => str.trim();
 
@@ -1328,8 +1233,6 @@ const toBytes = value => {
   return toInt(naturalFileSize);
 };
 
-const isFunction = value => typeof value === 'function';
-
 const toFunctionReference = string => {
   let ref = self;
   let levels = string.split('.');
@@ -1355,14 +1258,11 @@ const createServerAPI = outline => {
   const api = {};
 
   api.url = isString(outline) ? outline : outline.url || '';
-  api.timeout = outline.timeout ? parseInt(outline.timeout, 10) : 0;
+  api.timeout = outline.timeout ? parseInt(outline.timeout, 10) : 7000;
 
   forin(methods, key => {
     api[key] = createAction(key, outline[key], methods[key], api.timeout);
   });
-
-  // special treatment for remove
-  api.remove = outline.remove || null;
 
   return api;
 };
@@ -1386,7 +1286,6 @@ const createAction = (name, outline, method, timeout) => {
     withCredentials: false,
     timeout,
     onload: null,
-    ondata: null,
     onerror: null
   };
 
@@ -1470,7 +1369,7 @@ const conversionTable = {
   int: value => (getType(value) === 'bytes' ? toBytes(value) : toInt(value)),
   float: toFloat,
   bytes: toBytes,
-  string: value => (isFunction(value) ? value : toString(value)),
+  string: toString,
   serverapi: toServerAPI,
   object: value => {
     try {
@@ -1513,10 +1412,10 @@ const getValueByType = (newValue, defaultValue, valueType) => {
   return newValue;
 };
 
-const createOption = (defaultValue, valueType) => {
+const createOption = (option, defaultValue, valueType) => {
   let currentValue = defaultValue;
+
   return {
-    enumerable: true,
     get: () => currentValue,
     set: newValue => {
       currentValue = getValueByType(newValue, defaultValue, valueType);
@@ -1528,7 +1427,7 @@ const createOptions = options => {
   const obj = {};
   forin(options, prop => {
     const optionDefinition = options[prop];
-    obj[prop] = createOption(optionDefinition[0], optionDefinition[1]);
+    obj[prop] = createOption(prop, optionDefinition[0], optionDefinition[1]);
   });
   return createObject(obj);
 };
@@ -1536,12 +1435,6 @@ const createOptions = options => {
 const createInitialState = options => ({
   // model
   items: [],
-
-  // timeout used for calling update items
-  listUpdateTimeout: null,
-
-  // queue of items waiting to be processed
-  processingQueue: [],
 
   // options
   options: createOptions(options)
@@ -1572,7 +1465,6 @@ const createOptionActions = options => (dispatch, query, state) => {
   const obj = {};
   forin(options, key => {
     const name = fromCamels(key, '_').toUpperCase();
-
     obj[`SET_${name}`] = action => {
       try {
         state.options[key] = action.value;
@@ -1608,6 +1500,17 @@ const getUniqueId = () =>
     .toString(36)
     .substr(2, 9);
 
+const forEachDelayed = (items, cb, delay = 75) =>
+  items.map(
+    (item, index) =>
+      new Promise((resolve, reject) => {
+        setTimeout(() => {
+          cb(item);
+          resolve();
+        }, delay * index);
+      })
+  );
+
 const arrayRemove = (arr, index) => arr.splice(index, 1);
 
 const on = () => {
@@ -1622,14 +1525,14 @@ const on = () => {
   };
   return {
     fire: (event, ...args) => {
-      listeners
-        .filter(listener => listener.event === event)
-        .map(listener => listener.cb)
-        .forEach(cb => {
-          setTimeout(() => {
+      setTimeout(() => {
+        listeners
+          .filter(listener => listener.event === event)
+          .map(listener => listener.cb)
+          .forEach(cb => {
             cb(...args);
-          }, 0);
-        });
+          });
+      }, 0);
     },
     on: (event, cb) => {
       listeners.push({ event, cb });
@@ -1659,7 +1562,7 @@ const copyObjectPropertiesToObject = (src, target, excluded) => {
     );
 };
 
-const PRIVATE = [
+const PRIVATE_METHODS = [
   'fire',
   'process',
   'revert',
@@ -1667,27 +1570,13 @@ const PRIVATE = [
   'on',
   'off',
   'onOnce',
-  'retryLoad',
-  'extend',
-  'archive',
-  'archived',
-  'release',
-  'released',
-  'requestProcessing'
+  'retryLoad'
 ];
 
 const createItemAPI = item => {
   const api = {};
-  copyObjectPropertiesToObject(item, api, PRIVATE);
+  copyObjectPropertiesToObject(item, api, PRIVATE_METHODS);
   return api;
-};
-
-const removeReleasedItems = items => {
-  items.forEach((item, index) => {
-    if (item.released) {
-      arrayRemove(items, index);
-    }
-  });
 };
 
 const getNonNumeric = str => /[^0-9]+/.exec(str);
@@ -1760,7 +1649,7 @@ const addFilter = (key, cb) => filters.push({ key, cb });
 const extendDefaultOptions = additionalOptions =>
   Object.assign(defaultOptions, additionalOptions);
 
-const getOptions$1 = () => Object.assign({}, defaultOptions);
+const getOptions$1 = () => babelHelpers.extends({}, defaultOptions);
 
 const setOptions$1 = opts => {
   forin(opts, (key, value) => {
@@ -1803,29 +1692,64 @@ const defaultOptions = {
   allowMultiple: [false, Type.BOOLEAN], // Allow multiple files (disabled by default, as multiple attribute is also required on input to allow multiple)
   allowReplace: [true, Type.BOOLEAN], // Allow dropping a file on other file to replace it (only works when multiple is set to false)
   allowRevert: [true, Type.BOOLEAN], // Allows user to revert file upload
-
-  // Revert mode
-  forceRevert: [false, Type.BOOLEAN], // Set to 'force' to require the file to be reverted before removal
+  // TODO: allowDrag: [true, Type.BOOLEAN],					// Allow dragging files
+  // TODO: allowSwipe: [true, Type.BOOLEAN],					// Allow swipe to remove files
+  // TODO: allowRemoveAll: [true, Type.BOOLEAN],				// Allow removing all items at once
+  // TODO: allowUploadAll: [true, Type.BOOLEAN],				// Allow uploading all items at once
 
   // Input requirements
   maxFiles: [null, Type.INT], // Max number of files
-  checkValidity: [false, Type.BOOLEAN], // Enables custom validity messages
-
-  // Where to put file
-  itemInsertLocation: ['before', Type.STRING], // Default index in list to add items that have been dropped at the top of the list
-  itemInsertInterval: [75, Type.INT],
 
   // Drag 'n Drop related
   dropOnPage: [false, Type.BOOLEAN], // Allow dropping of files anywhere on page (prevents browser from opening file if dropped outside of Up)
   dropOnElement: [true, Type.BOOLEAN], // Drop needs to happen on element (set to false to also load drops outside of Up)
   dropValidation: [false, Type.BOOLEAN], // Enable or disable validating files on drop
   ignoredFiles: [['.ds_store', 'thumbs.db', 'desktop.ini'], Type.ARRAY],
+  // catchDirectories: [true, Type.BOOLEAN],					// Allow dropping directories in modern browsers
 
   // Upload related
   instantUpload: [true, Type.BOOLEAN], // Should upload files immidiately on drop
-  maxParallelUploads: [2, Type.INT], // Maximum files to upload in parallel
+  // TODO: parallel: [1, Type.INT],							// Maximum files to upload in parallel
+  // TODO: chunks: [false, Type.BOOLEAN],						// Use chunk uploading
+  // TODO: chunkSize: [.5 * (1024 * 1024), Type.INT],			// Upload in 512KB chunks
 
-  // The server api end points to use for uploading (see docs)
+  // by default no async api is supplied
+  /* expected format
+    {
+    url: '',
+    timeout: 1000,
+    process: {
+    url: '',
+    method: 'POST',
+            withCredentials: false,
+    headers: {},
+            onload: (response) => {
+                return response.id
+            }
+    },
+    revert: {
+    url: '',
+    method: 'DELETE',
+    withCredentials: false,
+    headers: {},
+            onload: null
+    },
+    fetch: {
+    url: '',
+    method: 'GET',
+    withCredentials: false,
+    headers: {},
+            onload: null
+    },
+    restore: {
+    url: '',
+    method: 'GET',
+    withCredentials: false,
+    headers: {},
+            onload: null
+    }
+    }
+    */
   server: [null, Type.SERVER_API],
 
   // Labels and status messages
@@ -1836,25 +1760,26 @@ const defaultOptions = {
     'Drag & Drop your files or <span class="filepond--label-action">Browse</span>',
     Type.STRING
   ],
-  labelInvalidField: ['Field contains invalid files', Type.STRING],
+
   labelFileWaitingForSize: ['Waiting for size', Type.STRING],
   labelFileSizeNotAvailable: ['Size not available', Type.STRING],
   labelFileCountSingular: ['file in list', Type.STRING],
   labelFileCountPlural: ['files in list', Type.STRING],
   labelFileLoading: ['Loading', Type.STRING],
   labelFileAdded: ['Added', Type.STRING], // assistive only
-  labelFileLoadError: ['Error during load', Type.STRING],
   labelFileRemoved: ['Removed', Type.STRING], // assistive only
-  labelFileRemoveError: ['Error during remove', Type.STRING],
+  labelFileLoadError: ['Error during load', Type.STRING],
   labelFileProcessing: ['Uploading', Type.STRING],
   labelFileProcessingComplete: ['Upload complete', Type.STRING],
   labelFileProcessingAborted: ['Upload cancelled', Type.STRING],
   labelFileProcessingError: ['Error during upload', Type.STRING],
-  labelFileProcessingRevertError: ['Error during revert', Type.STRING],
+  // labelFileProcessingPaused: ['Upload paused', Type.STRING],
 
   labelTapToCancel: ['tap to cancel', Type.STRING],
   labelTapToRetry: ['tap to retry', Type.STRING],
   labelTapToUndo: ['tap to undo', Type.STRING],
+  // labelTapToPause: ['tap to pause', Type.STRING],
+  // labelTapToResume: ['tap to resume', Type.STRING],
 
   labelButtonRemoveItem: ['Remove', Type.STRING],
   labelButtonAbortItemLoad: ['Abort', Type.STRING],
@@ -1899,25 +1824,12 @@ const defaultOptions = {
   onprocessfilerevert: [null, Type.FUNCTION],
   onprocessfile: [null, Type.FUNCTION],
   onremovefile: [null, Type.FUNCTION],
-  onpreparefile: [null, Type.FUNCTION],
-  onupdatefiles: [null, Type.FUNCTION],
-
-  // hooks
-  beforeAddFile: [null, Type.FUNCTION],
-  beforeRemoveFile: [null, Type.FUNCTION],
-
-  // styles
-  stylePanelLayout: [null, Type.STRING], // null 'integrated', 'compact', 'circle'
-  stylePanelAspectRatio: [null, Type.STRING], // null or '3:2' or 1
-  styleItemPanelAspectRatio: [null, Type.STRING],
-  styleButtonRemoveItemPosition: ['left', Type.STRING],
-  styleButtonProcessItemPosition: ['right', Type.STRING],
-  styleLoadIndicatorPosition: ['right', Type.STRING],
-  styleProgressIndicatorPosition: ['right', Type.STRING],
 
   // custom initial files array
   files: [[], Type.ARRAY]
 };
+
+const isFunction = value => typeof value === 'function';
 
 const getItemByQuery = (items, query) => {
   // just return first index
@@ -1939,27 +1851,10 @@ const getItemByQuery = (items, query) => {
   return items.find(item => item.id === query) || null;
 };
 
-const getNumericAspectRatioFromString = aspectRatio => {
-  if (isEmpty(aspectRatio)) {
-    return aspectRatio;
-  }
-  if (/:/.test(aspectRatio)) {
-    const [w, h] = aspectRatio.split(':');
-    return h / w;
-  }
-  return parseFloat(aspectRatio);
-};
-
-const getActiveItems = items => items.filter(item => !item.archived);
-
 const queries = state => ({
   GET_ITEM: query => getItemByQuery(state.items, query),
 
-  GET_ACTIVE_ITEM: query => getItemByQuery(getActiveItems(state.items), query),
-
-  GET_ACTIVE_ITEMS: query => getActiveItems(state.items),
-
-  GET_ITEMS: query => state.items,
+  GET_ITEMS: query => [...state.items],
 
   GET_ITEM_NAME: query => {
     const item = getItemByQuery(state.items, query);
@@ -1971,28 +1866,7 @@ const queries = state => ({
     return item ? item.fileSize : null;
   },
 
-  GET_STYLES: () =>
-    Object.keys(state.options)
-      .filter(key => /^style/.test(key))
-      .map(option => ({
-        name: option,
-        value: state.options[option]
-      })),
-
-  GET_PANEL_ASPECT_RATIO: () => {
-    const isShapeCircle = /circle/.test(state.options.stylePanelLayout);
-    const aspectRatio = isShapeCircle
-      ? 1
-      : getNumericAspectRatioFromString(state.options.stylePanelAspectRatio);
-    return aspectRatio;
-  },
-
-  GET_ITEM_PANEL_ASPECT_RATIO: () => state.options.styleItemPanelAspectRatio,
-
-  GET_ITEMS_BY_STATUS: status =>
-    getActiveItems(state.items).filter(item => item.status === status),
-
-  GET_TOTAL_ITEMS: () => getActiveItems(state.items).length,
+  GET_TOTAL_ITEMS: () => state.items.length,
 
   IS_ASYNC: () =>
     isObject(state.options.server) &&
@@ -2001,7 +1875,7 @@ const queries = state => ({
 });
 
 const hasRoomForItem = state => {
-  const count = getActiveItems(state.items).length;
+  const count = state.items.length;
 
   // if cannot have multiple items, to add one item it should currently not contain items
   if (!state.options.allowMultiple) {
@@ -2047,6 +1921,18 @@ const insertItem = (items, item, index) => {
   // expose
   return item;
 };
+
+const leftPad = (value, padding = '') =>
+  (padding + value).slice(-padding.length);
+
+const getDateString = (date = new Date()) =>
+  `${date.getFullYear()}-${leftPad(date.getMonth() + 1, '00')}-${leftPad(
+    date.getDate(),
+    '00'
+  )}_${leftPad(date.getHours(), '00')}-${leftPad(
+    date.getMinutes(),
+    '00'
+  )}-${leftPad(date.getSeconds(), '00')}`;
 
 const isBase64DataURI = str =>
   /^\s*data:([a-z]+\/[a-z0-9-+.]+(;[a-z-]+=[a-z0-9-]+)?)?(;base64)?,([a-z0-9!$&',()*+;=\-._~:@\/?%\s]*)\s*$/i.test(
@@ -2102,29 +1988,12 @@ const guesstimateExtension = type => {
   return '';
 };
 
-const leftPad = (value, padding = '') =>
-  (padding + value).slice(-padding.length);
-
-const getDateString = (date = new Date()) =>
-  `${date.getFullYear()}-${leftPad(date.getMonth() + 1, '00')}-${leftPad(
-    date.getDate(),
-    '00'
-  )}_${leftPad(date.getHours(), '00')}-${leftPad(
-    date.getMinutes(),
-    '00'
-  )}-${leftPad(date.getSeconds(), '00')}`;
-
 const getFileFromBlob = (blob, filename, type = null, extension = null) => {
   const file =
     typeof type === 'string'
       ? blob.slice(0, blob.size, type)
       : blob.slice(0, blob.size, blob.type);
   file.lastModifiedDate = new Date();
-
-  // if blob has name property, use as filename if no filename supplied
-  if (!isString(filename)) {
-    filename = getDateString();
-  }
 
   // if filename supplied but no extension and filename has extension
   if (filename && extension === null && getExtensionFromFilename(filename)) {
@@ -2133,7 +2002,6 @@ const getFileFromBlob = (blob, filename, type = null, extension = null) => {
     extension = extension || guesstimateExtension(file.type);
     file.name = filename + (extension ? '.' + extension : '');
   }
-
   return file;
 };
 
@@ -2202,56 +2070,23 @@ const getFileFromBase64DataURI = (dataURI, filename, extension) => {
   );
 };
 
-const getFileNameFromHeader = header => {
-  const matches = header.match(/(?:filename="(.+)")|(?:filename=(.+))/) || [];
-  return matches[1] || matches[2];
-};
-
-const getFileSizeFromHeader = header => {
-  if (/content-length:/i.test(header)) {
-    const size = header.match(/[0-9]+/)[0];
-    return size ? parseInt(size, 10) : null;
-  }
-  return null;
-};
-
-const getTranfserIdFromHeader = header => {
-  if (/x-content-transfer-id:/i.test(header)) {
-    const id = (header.split(':')[1] || '').trim();
-    return id || null;
-  }
-  return null;
-};
-
-const getFileInfoFromHeaders = headers => {
-  const info = {
-    source: null,
-    name: null,
-    size: null
-  };
-
+const getFilenameFromHeaders = headers => {
   const rows = headers.split('\n');
-  for (let header of rows) {
-    const name = getFileNameFromHeader(header);
-    if (name) {
-      info.name = name;
+  for (const header of rows) {
+    const matches = header.match(/filename="(.+)"/);
+    if (!matches || !matches[1]) {
       continue;
     }
-
-    const size = getFileSizeFromHeader(header);
-    if (size) {
-      info.size = size;
-      continue;
-    }
-
-    const source = getTranfserIdFromHeader(header);
-    if (source) {
-      info.source = source;
-      continue;
-    }
+    return matches[1];
   }
+  return null;
+};
 
-  return info;
+const renameFile = (file, name) => {
+  const renamedFile = file.slice(0, file.size, file.type);
+  renamedFile.lastModifiedDate = file.lastModifiedDate;
+  renamedFile.name = name;
+  return renamedFile;
 };
 
 const createFileLoader = fetchFn => {
@@ -2285,10 +2120,10 @@ const createFileLoader = fetchFn => {
       api.fire('load', source);
     } else if (source instanceof Blob) {
       // Load blobs, set default name to current date
-      api.fire('load', getFileFromBlob(source, source.name));
+      api.fire('load', getFileFromBlob(source, getDateString()));
     } else if (isBase64DataURI(source)) {
       // Load base 64, set default name to current date
-      api.fire('load', getFileFromBase64DataURI(source));
+      api.fire('load', getFileFromBase64DataURI(source, getDateString()));
     } else {
       // Deal as if is external URL, let's load it!
       loadURL(source);
@@ -2322,7 +2157,10 @@ const createFileLoader = fetchFn => {
 
         // turn blob response into a file
         if (response instanceof Blob) {
-          response = getFileFromBlob(response, getFilenameFromURL(url));
+          response = getFileFromBlob(
+            response,
+            getFilenameFromURL(url) || getDateString()
+          );
         }
 
         api.fire('load', response instanceof Blob ? response : response.body);
@@ -2364,19 +2202,17 @@ const createFileLoader = fetchFn => {
         api.fire('abort');
       },
       response => {
-        const fileinfo = getFileInfoFromHeaders(
-          typeof response === 'string' ? response : response.headers
-        );
         api.fire('meta', {
-          size: state.size || fileinfo.size,
-          filename: fileinfo.name,
-          source: fileinfo.source
+          size: state.size,
+          filename: getFilenameFromHeaders(
+            typeof response === 'string' ? response : response.headers
+          )
         });
       }
     );
   };
 
-  const api = Object.assign({}, on(), {
+  const api = babelHelpers.extends({}, on(), {
     setSource: source => (state.source = source),
     getProgress, // file load progress
     abort, // abort file load
@@ -2386,7 +2222,12 @@ const createFileLoader = fetchFn => {
   return api;
 };
 
-const isGet = method => /GET|HEAD/.test(method);
+const createResponse$1 = (type, code, body, headers) => ({
+  type,
+  code,
+  body,
+  headers
+});
 
 const sendRequest = (data, url, options) => {
   const api = {
@@ -2403,11 +2244,13 @@ const sendRequest = (data, url, options) => {
   };
 
   // timeout identifier, only used when timeout is defined
+  let timeoutId = null;
+  let timedOut = false;
   let aborted = false;
   let headersReceived = false;
 
   // set default options
-  options = Object.assign(
+  options = babelHelpers.extends(
     {
       method: 'POST',
       headers: {},
@@ -2416,12 +2259,9 @@ const sendRequest = (data, url, options) => {
     options
   );
 
-  // encode url
-  url = encodeURI(url);
-
   // if method is GET, add any received data to url
-
-  if (isGet(options.method) && data) {
+  if (/GET/i.test(options.method) && data) {
+    //url = `${ url }${ hasQueryString(url) ? '&' : '?' }data=${ encodeURIComponent(typeof data === 'string' ? data : JSON.stringify(data)) }`;
     url = `${url}${encodeURIComponent(
       typeof data === 'string' ? data : JSON.stringify(data)
     )}`;
@@ -2431,10 +2271,13 @@ const sendRequest = (data, url, options) => {
   const xhr = new XMLHttpRequest();
 
   // progress of load
-  const process = isGet(options.method) ? xhr : xhr.upload;
+  const process = /GET/i.test(options.method) ? xhr : xhr.upload;
   process.onprogress = e => {
+    // progress event received, timeout no longer needed
+    clearTimeout(timeoutId);
+
     // no progress event when aborted ( onprogress is called once after abort() )
-    if (aborted) {
+    if (aborted || timedOut) {
       return;
     }
 
@@ -2452,6 +2295,9 @@ const sendRequest = (data, url, options) => {
     if (xhr.readyState === 4 && xhr.status === 0) {
       return;
     }
+
+    // timeout no longer needed as connection is setup
+    clearTimeout(timeoutId);
 
     if (headersReceived) {
       return;
@@ -2474,26 +2320,30 @@ const sendRequest = (data, url, options) => {
   };
 
   // error during load
-  xhr.onerror = () => api.onerror(xhr);
+  xhr.onerror = () => {
+    api.onerror(xhr);
+  };
 
   // request aborted
   xhr.onabort = () => {
+    if (timedOut) {
+      return;
+    }
     aborted = true;
     api.onabort();
   };
 
-  // request timeout
-  xhr.ontimeout = () => api.ontimeout(xhr);
-
-  // open up open up!
-  xhr.open(options.method, url, true);
-
-  // set timeout if defined (do it after open so IE11 plays ball)
+  // set timeout if defined
   if (isInt(options.timeout)) {
-    xhr.timeout = options.timeout;
+    timeoutId = setTimeout(() => {
+      timedOut = true;
+      api.ontimeout(xhr);
+      api.abort();
+    }, options.timeout);
   }
 
   // add headers
+  xhr.open(options.method, url, true);
   Object.keys(options.headers).forEach(key => {
     xhr.setRequestHeader(key, options.headers[key]);
   });
@@ -2513,13 +2363,6 @@ const sendRequest = (data, url, options) => {
 
   return api;
 };
-
-const createResponse = (type, code, body, headers) => ({
-  type,
-  code,
-  body,
-  headers
-});
 
 const createTimeoutResponse = cb => xhr => {
   cb(createResponse('error', 0, 'Timeout', xhr.getAllResponseHeaders()));
@@ -2546,7 +2389,7 @@ const createFetchFunction = (apiUrl = '', action) => {
     const request = sendRequest(
       url,
       apiUrl + action.url,
-      Object.assign({}, action, {
+      babelHelpers.extends({}, action, {
         responseType: 'blob'
       })
     );
@@ -2557,11 +2400,13 @@ const createFetchFunction = (apiUrl = '', action) => {
 
       // get filename
       const filename =
-        getFileInfoFromHeaders(headers).name || getFilenameFromURL(url);
+        getFilenameFromHeaders(headers) ||
+        getFilenameFromURL(url) ||
+        getDateString();
 
       // create response
       load(
-        createResponse(
+        createResponse$1(
           'load',
           xhr.status,
           getFileFromBlob(onload(xhr.response), filename),
@@ -2572,7 +2417,7 @@ const createFetchFunction = (apiUrl = '', action) => {
 
     request.onerror = xhr => {
       error(
-        createResponse(
+        createResponse$1(
           'error',
           xhr.status,
           onerror(xhr.response) || xhr.statusText,
@@ -2583,7 +2428,12 @@ const createFetchFunction = (apiUrl = '', action) => {
 
     request.onheaders = xhr => {
       headers(
-        createResponse('headers', xhr.status, null, xhr.getAllResponseHeaders())
+        createResponse$1(
+          'headers',
+          xhr.status,
+          null,
+          xhr.getAllResponseHeaders()
+        )
       );
     };
 
@@ -2617,36 +2467,29 @@ const createProcessorFunction = (apiUrl = '', action, name) => {
 
   // internal handler
   return (file, metadata, load, error, progress, abort) => {
-    // set onload hanlder
-    const ondata = action.ondata || (fd => fd);
-    const onload = action.onload || (res => res);
-    const onerror = action.onerror || (res => null);
-
     // no file received
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // create formdata object
     var formData = new FormData();
+    formData.append(name, file, file.name);
 
     // add metadata under same name
     if (isObject(metadata)) {
       formData.append(name, JSON.stringify(metadata));
     }
 
-    // Turn into an array of objects so no matter what the input, we can handle it the same way
-    (file instanceof Blob ? [{ name: null, file }] : file).forEach(item => {
-      formData.append(
-        name,
-        item.file,
-        item.name === null ? item.file.name : `${item.name}${item.file.name}`
-      );
-    });
+    // set onload hanlder
+    const onload = action.onload || (res => res);
+    const onerror = action.onerror || (res => null);
 
     // send request object
-    const request = sendRequest(ondata(formData), apiUrl + action.url, action);
+    const request = sendRequest(formData, apiUrl + action.url, action);
     request.onload = xhr => {
       load(
-        createResponse(
+        createResponse$1(
           'load',
           xhr.status,
           onload(xhr.response),
@@ -2657,7 +2500,7 @@ const createProcessorFunction = (apiUrl = '', action, name) => {
 
     request.onerror = xhr => {
       error(
-        createResponse(
+        createResponse$1(
           'error',
           xhr.status,
           onerror(xhr.response) || xhr.statusText,
@@ -2703,7 +2546,7 @@ const createRevertFunction = (apiUrl = '', action) => {
     );
     request.onload = xhr => {
       load(
-        createResponse(
+        createResponse$1(
           'load',
           xhr.status,
           onload(xhr.response),
@@ -2714,7 +2557,7 @@ const createRevertFunction = (apiUrl = '', action) => {
 
     request.onerror = xhr => {
       error(
-        createResponse(
+        createResponse$1(
           'error',
           xhr.status,
           onerror(xhr.response) || xhr.statusText,
@@ -2798,7 +2641,7 @@ const createFileProcessor = processFn => {
     const completeFn = () => {
       state.complete = true;
 
-      api.fire('load-perceived', state.response.body);
+      api.fire('load', state.response.body);
     };
 
     // let's start processing
@@ -2845,23 +2688,21 @@ const createFileProcessor = processFn => {
       response => {
         // we put the response in state so we can access
         // it outside of this method
-        state.response = isObject(response)
-          ? response
-          : {
-              type: 'load',
-              code: 200,
-              body: `${response}`,
-              headers: {}
-            };
+        state.response =
+          typeof response === 'string'
+            ? {
+                type: 'load',
+                code: 200,
+                body: response,
+                headers: {}
+              }
+            : response;
 
         // update duration
         state.duration = Date.now() - state.timestamp;
 
         // force progress to 1 as we're now done
         state.progress = 1;
-
-        // actual load is done let's share results
-        api.fire('load', state.response.body);
 
         // we are really done
         // if perceived progress is 1 ( wait for perceived progress to complete )
@@ -2879,13 +2720,13 @@ const createFileProcessor = processFn => {
         // update others about this error
         api.fire(
           'error',
-          isObject(error)
-            ? error
-            : {
+          typeof error === 'string'
+            ? {
                 type: 'error',
                 code: 0,
-                body: `${error}`
+                body: error
               }
+            : error
         );
       },
 
@@ -2906,7 +2747,7 @@ const createFileProcessor = processFn => {
         state.perceivedPerformanceUpdater.clear();
 
         // fire the abort event so we can switch visuals
-        api.fire('abort', state.response ? state.response.body : null);
+        api.fire('abort');
       }
     );
   };
@@ -2925,6 +2766,9 @@ const createFileProcessor = processFn => {
 
     // if has response object, we've completed the request
     state.complete = true;
+
+    // now aborted, if server returned a response, let's pass it along
+    api.fire('abort', state.response ? state.response.body : null);
   };
 
   const reset = () => {
@@ -2943,7 +2787,7 @@ const createFileProcessor = processFn => {
     state.progress ? Math.min(state.progress, state.perceivedProgress) : null;
   const getDuration = () => Math.min(state.duration, state.perceivedDuration);
 
-  const api = Object.assign({}, on(), {
+  const api = babelHelpers.extends({}, on(), {
     process, // start processing file
     abort, // abort active process request
     getProgress,
@@ -2957,14 +2801,13 @@ const createFileProcessor = processFn => {
 const getFilenameWithoutExtension = name =>
   name.substr(0, name.lastIndexOf('.')) || name;
 
-const ItemStatus$1 = {
+const ItemStatus = {
   INIT: 1,
   IDLE: 2,
-  PROCESSING_QUEUED: 9,
   PROCESSING: 3,
+  PROCESSING_PAUSED: 4,
   PROCESSING_COMPLETE: 5,
   PROCESSING_ERROR: 6,
-  PROCESSING_REVERT_ERROR: 10,
   LOADING: 7,
   LOAD_ERROR: 8
 };
@@ -2974,7 +2817,7 @@ const createFileStub = source => {
 
   // is blob or base64, then we need to set the name
   if (source instanceof Blob || isBase64DataURI(source)) {
-    data[0] = source.name || getDateString();
+    data[0] = getDateString();
   } else if (isBase64DataURI(source)) {
     // if is base64 data uri we need to determine the average size and type
     data[1] = source.length;
@@ -2993,21 +2836,10 @@ const createFileStub = source => {
   };
 };
 
-const FileOrigin$1 = {
+const FileOrigin = {
   INPUT: 1,
   LIMBO: 2,
   LOCAL: 3
-};
-
-const deepCloneObject = src => {
-  if (!isObject(src)) return src;
-  const target = isArray(src) ? [] : {};
-  for (const key in src) {
-    if (!src.hasOwnProperty(key)) continue;
-    const v = src[key];
-    target[key] = v && isObject(v) ? deepCloneObject(v) : v;
-  }
-  return target;
 };
 
 const createItem = (origin = null, serverFileReference = null, file = null) => {
@@ -3018,12 +2850,6 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
    * Internal item state
    */
   const state = {
-    // is archived
-    archived: false,
-
-    // removed from view
-    released: false,
-
     // original source
     source: null,
 
@@ -3035,16 +2861,13 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
 
     // current item status
     status: serverFileReference
-      ? ItemStatus$1.PROCESSING_COMPLETE
-      : ItemStatus$1.INIT,
+      ? ItemStatus.PROCESSING_COMPLETE
+      : ItemStatus.INIT,
 
     // active processes
     activeLoader: null,
     activeProcessor: null
   };
-
-  // callback used when abort processing is called to link back to the resolve method
-  let abortProcessingRequestComplete = null;
 
   /**
    * Externally added item metadata
@@ -3054,28 +2877,20 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
   // item data
   const setStatus = status => (state.status = status);
 
-  // fire event unless the item has been archived
-  const fire = (event, ...params) => {
-    if (state.released) return;
-    api.fire(event, ...params);
-  };
-
   // file data
   const getFileExtension = () => getExtensionFromFilename(state.file.name);
   const getFileType = () => state.file.type;
   const getFileSize = () => state.file.size;
   const getFile = () => state.file;
 
-  //
-  // logic to load a file
-  //
+  // loads files
   const load = (source, loader, onload) => {
     // remember the original item source
     state.source = source;
 
     // file stub is already there
     if (state.file) {
-      fire('load-skip');
+      api.fire('load-skip');
       return;
     }
 
@@ -3084,7 +2899,7 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
 
     // starts loading
     loader.on('init', () => {
-      fire('load-init');
+      api.fire('load-init');
     });
 
     // we'eve received a size indication, let's update the stub
@@ -3095,36 +2910,29 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
       // set name of file stub
       state.file.filename = meta.filename;
 
-      // if has received source, we done
-      if (meta.source) {
-        origin = FileOrigin$1.LIMBO;
-        state.serverFileReference = meta.source;
-        state.status = ItemStatus$1.PROCESSING_COMPLETE;
-      }
-
       // size has been updated
-      fire('load-meta');
+      api.fire('load-meta');
     });
 
     // the file is now loading we need to update the progress indicators
     loader.on('progress', progress => {
-      setStatus(ItemStatus$1.LOADING);
+      setStatus(ItemStatus.LOADING);
 
-      fire('load-progress', progress);
+      api.fire('load-progress', progress);
     });
 
     // an error was thrown while loading the file, we need to switch to error state
     loader.on('error', error => {
-      setStatus(ItemStatus$1.LOAD_ERROR);
+      setStatus(ItemStatus.LOAD_ERROR);
 
-      fire('load-request-error', error);
+      api.fire('load-request-error', error);
     });
 
     // user or another process aborted the file load (cannot retry)
     loader.on('abort', () => {
-      setStatus(ItemStatus$1.INIT);
+      setStatus(ItemStatus.INIT);
 
-      fire('load-abort');
+      api.fire('load-abort');
     });
 
     // done loading
@@ -3135,25 +2943,25 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
       // called when file has loaded succesfully
       const success = result => {
         // set (possibly) transformed file
-        state.file = result.size > 0 ? result : state.file;
+        state.file = result;
 
         // file received
-        if (origin === FileOrigin$1.LIMBO && state.serverFileReference) {
-          setStatus(ItemStatus$1.PROCESSING_COMPLETE);
+        if (origin === FileOrigin.LIMBO && state.serverFileReference) {
+          setStatus(ItemStatus.PROCESSING_COMPLETE);
         } else {
-          setStatus(ItemStatus$1.IDLE);
+          setStatus(ItemStatus.IDLE);
         }
 
-        fire('load');
+        api.fire('load');
       };
 
       const error = result => {
         // set original file
         state.file = file;
-        fire('load-meta');
+        api.fire('load-meta');
 
-        setStatus(ItemStatus$1.LOAD_ERROR);
-        fire('load-file-error', result);
+        setStatus(ItemStatus.LOAD_ERROR);
+        api.fire('load-file-error', result);
       };
 
       // if we already have a server file reference, we don't need to call the onload method
@@ -3176,30 +2984,8 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
     loader.load();
   };
 
-  const retryLoad = () => {
-    if (!state.activeLoader) {
-      return;
-    }
-    state.activeLoader.load();
-  };
-
-  const abortLoad = () => {
-    if (!state.activeLoader) {
-      return;
-    }
-    state.activeLoader.abort();
-  };
-
-  //
-  // logic to process a file
-  //
+  // file processor
   const process = (processor, onprocess) => {
-    // now processing
-    setStatus(ItemStatus$1.PROCESSING);
-
-    // reset abort callback
-    abortProcessingRequestComplete = null;
-
     // if no file loaded we'll wait for the load event
     if (!(state.file instanceof Blob)) {
       api.on('load', () => {
@@ -3209,30 +2995,26 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
     }
 
     // setup processor
-    processor.on('load', serverFileReference => {
-      // need this id to be able to revert the upload
-      state.serverFileReference = serverFileReference;
-    });
 
-    processor.on('load-perceived', serverFileReference => {
+    processor.on('load', serverFileReference => {
       // no longer required
       state.activeProcessor = null;
 
       // need this id to be able to rever the upload
       state.serverFileReference = serverFileReference;
 
-      setStatus(ItemStatus$1.PROCESSING_COMPLETE);
-      fire('process-complete', serverFileReference);
+      setStatus(ItemStatus.PROCESSING_COMPLETE);
+      api.fire('process-complete', serverFileReference);
     });
 
     processor.on('start', () => {
-      fire('process-start');
+      api.fire('process-start');
     });
 
     processor.on('error', error => {
       state.activeProcessor = null;
-      setStatus(ItemStatus$1.PROCESSING_ERROR);
-      fire('process-error', error);
+      setStatus(ItemStatus.PROCESSING_ERROR);
+      api.fire('process-error', error);
     });
 
     processor.on('abort', serverFileReference => {
@@ -3241,26 +3023,18 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
       // if file was uploaded but processing was cancelled during perceived processor time store file reference
       state.serverFileReference = serverFileReference;
 
-      setStatus(ItemStatus$1.IDLE);
-      fire('process-abort');
-
-      // has timeout so doesn't interfere with remove action
-      if (abortProcessingRequestComplete) {
-        abortProcessingRequestComplete();
-      }
+      setStatus(ItemStatus.IDLE);
+      api.fire('process-abort');
     });
 
     processor.on('progress', progress => {
-      fire('process-progress', progress);
+      setStatus(ItemStatus.PROCESSING);
+      api.fire('process-progress', progress);
     });
 
     // when successfully transformed
     const success = file => {
-      // if was archived in the mean time, don't process
-      if (state.archived) return;
-
-      // process file!
-      processor.process(file, Object.assign({}, metadata));
+      processor.process(file, babelHelpers.extends({}, metadata));
     };
 
     // something went wrong during transform phase
@@ -3273,92 +3047,53 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
     state.activeProcessor = processor;
   };
 
-  const requestProcessing = () => {
-    setStatus(ItemStatus$1.PROCESSING_QUEUED);
-  };
-
-  const abortProcessing = () =>
-    new Promise(resolve => {
-      if (!state.activeProcessor) {
-        setStatus(ItemStatus$1.IDLE);
-        fire('process-abort');
-
-        resolve();
-        return;
-      }
-
-      abortProcessingRequestComplete = () => {
-        resolve();
-      };
-
-      state.activeProcessor.abort();
-    });
-
-  //
-  // logic to revert a processed file
-  //
-  const revert = (revertFileUpload, forceRevert) =>
-    new Promise((resolve, reject) => {
-      // cannot revert without a server id for this process
-      if (state.serverFileReference === null) {
-        resolve();
-        return;
-      }
-
-      // revert the upload (fire and forget)
-      revertFileUpload(
-        state.serverFileReference,
-        () => {
-          // reset file server id as now it's no available on the server
-          state.serverFileReference = null;
-          resolve();
-        },
-        error => {
-          // don't set error state when reverting is optional, it will always resolve
-          if (!forceRevert) {
-            resolve();
-            return;
-          }
-
-          // oh no errors
-          setStatus(ItemStatus$1.PROCESSING_REVERT_ERROR);
-          fire('process-revert-error');
-          reject(error);
-        }
-      );
-
-      // fire event
-      setStatus(ItemStatus$1.IDLE);
-      fire('process-revert');
-    });
-
-  // exposed methods
-  const setMetadata = (key, value, silent) => {
-    const keys = key.split('.');
-    const root = keys[0];
-    const last = keys.pop();
-    let data = metadata;
-    keys.forEach(key => (data = data[key]));
-
-    // compare old value against new value, if they're the same, we're not updating
-    if (JSON.stringify(data[last]) === JSON.stringify(value)) {
+  const revert = revertFileUpload => {
+    // cannot revert without a server id for this process
+    if (state.serverFileReference === null) {
       return;
     }
 
-    // update value
-    data[last] = value;
+    // revert the upload (fire and forget)
+    revertFileUpload(
+      state.serverFileReference,
+      () => {
+        // reset file server id as now it's no available on the server
+        state.serverFileReference = null;
+      },
+      error => {
+        // TODO: handle revert error
+      }
+    );
 
-    if (silent) return;
-
-    fire('metadata-update', {
-      key: root,
-      value: metadata[root]
-    });
+    // fire event
+    setStatus(ItemStatus.IDLE);
+    api.fire('process-revert');
   };
 
-  const getMetadata = key => deepCloneObject(key ? metadata[key] : metadata);
+  const abortLoad = () => {
+    if (!state.activeLoader) {
+      return;
+    }
+    state.activeLoader.abort();
+  };
 
-  const api = Object.assign(
+  const retryLoad = () => {
+    if (!state.activeLoader) {
+      return;
+    }
+    state.activeLoader.load();
+  };
+
+  const abortProcessing = () => {
+    if (!state.activeProcessor) {
+      return;
+    }
+    state.activeProcessor.abort();
+  };
+
+  // exposed methods
+
+  const api = babelHelpers.extends(
     {
       id: { get: () => id },
       origin: { get: () => origin },
@@ -3375,44 +3110,22 @@ const createItem = (origin = null, serverFileReference = null, file = null) => {
 
       source: { get: () => state.source },
 
-      getMetadata,
-      setMetadata: (key, value, silent) => {
-        if (isObject(key)) {
-          const data = key;
-          Object.keys(data).forEach(key => {
-            setMetadata(key, data[key], value);
-          });
-          return key;
-        }
-        setMetadata(key, value, silent);
-        return value;
-      },
-
-      extend: (name, handler) => (itemAPI[name] = handler),
+      getMetadata: name =>
+        name ? metadata[name] : babelHelpers.extends({}, metadata),
+      setMetadata: (name, value) => (metadata[name] = value),
 
       abortLoad,
       retryLoad,
-      requestProcessing,
       abortProcessing,
 
       load,
       process,
       revert
     },
-    on(),
-    {
-      release: () => (state.released = true),
-      released: { get: () => state.released },
-
-      archive: () => (state.archived = true),
-      archived: { get: () => state.archived }
-    }
+    on()
   );
 
-  // create it here instead of returning it instantly so we can extend it later
-  const itemAPI = createObject(api);
-
-  return itemAPI;
+  return createObject(api);
 };
 
 const getItemIndexByQuery = (items, query) => {
@@ -3438,6 +3151,19 @@ const getItemById = (items, itemId) => {
   return items[index] || null;
 };
 
+const removeIndex = (arr, index) => arr.splice(index, 1);
+
+const removeItem = (items, needle) => {
+  // get index of item
+  const index = items.findIndex(item => item === needle);
+
+  // remove it from array
+  removeIndex(items, index);
+
+  // return removed item
+  return needle;
+};
+
 const fetchLocal = (url, load, error, progress, abort, headers) => {
   const request = sendRequest(null, url, {
     method: 'GET',
@@ -3450,11 +3176,13 @@ const fetchLocal = (url, load, error, progress, abort, headers) => {
 
     // get filename
     const filename =
-      getFileInfoFromHeaders(headers).name || getFilenameFromURL(url);
+      getFilenameFromHeaders(headers) ||
+      getFilenameFromURL(url) ||
+      getDateString();
 
     // create response
     load(
-      createResponse(
+      createResponse$1(
         'load',
         xhr.status,
         getFileFromBlob(xhr.response, filename),
@@ -3465,7 +3193,7 @@ const fetchLocal = (url, load, error, progress, abort, headers) => {
 
   request.onerror = xhr => {
     error(
-      createResponse(
+      createResponse$1(
         'error',
         xhr.status,
         xhr.statusText,
@@ -3476,7 +3204,7 @@ const fetchLocal = (url, load, error, progress, abort, headers) => {
 
   request.onheaders = xhr => {
     headers(
-      createResponse('headers', xhr.status, null, xhr.getAllResponseHeaders())
+      createResponse$1('headers', xhr.status, null, xhr.getAllResponseHeaders())
     );
   };
 
@@ -3494,7 +3222,6 @@ const getDomainFromURL = url => {
   }
   return url
     .toLowerCase()
-    .replace('blob:', '')
     .replace(/([a-z])?:\/\//, '$1')
     .split('/')[0];
 };
@@ -3502,46 +3229,6 @@ const getDomainFromURL = url => {
 const isExternalURL = url =>
   (url.indexOf(':') > -1 || url.indexOf('//') > -1) &&
   getDomainFromURL(location.href) !== getDomainFromURL(url);
-
-const isFile = value =>
-  value instanceof File || (value instanceof Blob && value.name);
-
-const dynamicLabel = label => (...params) =>
-  isFunction(label) ? label(...params) : label;
-
-const isMockItem = item => !isFile(item.file);
-
-const listUpdated = (dispatch, state) => {
-  clearTimeout(state.listUpdateTimeout);
-  state.listUpdateTimeout = setTimeout(() => {
-    dispatch('DID_UPDATE_ITEMS', { items: getActiveItems(state.items) });
-  }, 0);
-};
-
-const optionalPromise = (fn, ...params) =>
-  new Promise(resolve => {
-    if (!fn) {
-      return resolve(true);
-    }
-
-    const result = fn(...params);
-
-    if (result == null) {
-      return resolve(true);
-    }
-
-    if (typeof result === 'boolean') {
-      return resolve(result);
-    }
-
-    if (typeof result.then === 'function') {
-      result.then(resolve);
-    }
-  });
-
-const sortItems = (state, compare) => {
-  state.items.sort((a, b) => compare(createItemAPI(a), createItemAPI(b)));
-};
 
 // returns item based on state
 const getItemByQueryFromState = (state, itemHandler) => ({
@@ -3552,7 +3239,7 @@ const getItemByQueryFromState = (state, itemHandler) => ({
   const item = getItemByQuery(state.items, query);
   if (!item) {
     failure({
-      error: createResponse('error', 0, 'Item not found'),
+      error: createResponse$1('error', 0, 'Item not found'),
       file: null
     });
     return;
@@ -3565,7 +3252,7 @@ const actions = (dispatch, query, state) => ({
    * Aborts all ongoing processes
    */
   ABORT_ALL: () => {
-    getActiveItems(state.items).forEach(item => {
+    query('GET_ITEMS').forEach(item => {
       item.abortLoad();
       item.abortProcessing();
     });
@@ -3582,152 +3269,31 @@ const actions = (dispatch, query, state) => ({
     }));
 
     // loop over files, if file is in list, leave it be, if not, remove
-    // test if items should be moved
-    let activeItems = getActiveItems(state.items);
 
-    activeItems.forEach(item => {
+    // test if items should be moved
+    [...state.items].forEach(item => {
       // if item not is in new value, remove
-      if (
-        !files.find(
-          file => file.source === item.source || file.source === item.file
-        )
-      ) {
+      if (!files.find(file => file.source === item.source)) {
         dispatch('REMOVE_ITEM', { query: item });
       }
     });
 
     // add new files
-    activeItems = getActiveItems(state.items);
     files.forEach((file, index) => {
       // if file is already in list
-      if (
-        activeItems.find(
-          item => item.source === file.source || item.file === file.source
-        )
-      )
+      if ([...state.items].find(item => item.source === file.source)) {
         return;
+      }
 
       // not in list, add
       dispatch(
         'ADD_ITEM',
-        Object.assign({}, file, {
+        babelHelpers.extends({}, file, {
           interactionMethod: InteractionMethod.NONE,
           index
         })
       );
     });
-  },
-
-  DID_UPDATE_ITEM_METADATA: ({ id, change }) => {
-    const item = getItemById(state.items, id);
-
-    // only revert and attempt to upload when we're uploading to a server
-    if (!query('IS_ASYNC')) {
-      // should we update the output data
-      applyFilterChain('SHOULD_PREPARE_OUTPUT', false, { item, query }).then(
-        shouldPrepareOutput => {
-          if (!shouldPrepareOutput) {
-            return;
-          }
-          dispatch(
-            'REQUEST_PREPARE_OUTPUT',
-            {
-              query: id,
-              item,
-              ready: file => {
-                dispatch('DID_PREPARE_OUTPUT', { id, file });
-              }
-            },
-            true
-          );
-        }
-      );
-
-      return;
-    }
-
-    // for async scenarios
-    const upload = () => {
-      // we push this forward a bit so the interface is updated correctly
-      setTimeout(() => {
-        dispatch('REQUEST_ITEM_PROCESSING', { query: id });
-      }, 32);
-    };
-
-    const revert = doUpload => {
-      item
-        .revert(
-          createRevertFunction(
-            state.options.server.url,
-            state.options.server.revert
-          ),
-          query('GET_FORCE_REVERT')
-        )
-        .then(doUpload ? upload : () => {})
-        .catch(() => {});
-    };
-
-    const abort = doUpload => {
-      item.abortProcessing().then(doUpload ? upload : () => {});
-    };
-
-    // if we should re-upload the file immidiately
-    if (item.status === ItemStatus$1.PROCESSING_COMPLETE) {
-      return revert(state.options.instantUpload);
-    }
-
-    // if currently uploading, cancel upload
-    if (item.status === ItemStatus$1.PROCESSING) {
-      return abort(state.options.instantUpload);
-    }
-
-    if (state.options.instantUpload) {
-      upload();
-    }
-  },
-
-  SORT: ({ compare }) => {
-    sortItems(state, compare);
-  },
-
-  ADD_ITEMS: ({
-    items,
-    index,
-    interactionMethod,
-    success = () => {},
-    failure = () => {}
-  }) => {
-    let currentIndex = index;
-
-    if (index === -1 || typeof index === 'undefined') {
-      const insertLocation = query('GET_ITEM_INSERT_LOCATION');
-      const totalItems = query('GET_TOTAL_ITEMS');
-      currentIndex = insertLocation === 'before' ? 0 : totalItems;
-    }
-
-    const ignoredFiles = query('GET_IGNORED_FILES');
-    const isValidFile = source =>
-      isFile(source)
-        ? !ignoredFiles.includes(source.name.toLowerCase())
-        : !isEmpty(source);
-    const validItems = items.filter(isValidFile);
-
-    const promises = validItems.map(
-      source =>
-        new Promise((resolve, reject) => {
-          dispatch('ADD_ITEM', {
-            interactionMethod,
-            source,
-            success: resolve,
-            failure: reject,
-            index: currentIndex++
-          });
-        })
-    );
-
-    Promise.all(promises)
-      .then(success)
-      .catch(failure);
   },
 
   /**
@@ -3737,7 +3303,7 @@ const actions = (dispatch, query, state) => ({
    */
   ADD_ITEM: ({
     source,
-    index = -1,
+    index,
     interactionMethod,
     success = () => {},
     failure = () => {},
@@ -3746,19 +3312,18 @@ const actions = (dispatch, query, state) => ({
     // if no source supplied
     if (isEmpty(source)) {
       failure({
-        error: createResponse('error', 0, 'No source'),
+        error: createResponse$1('error', 0, 'No source'),
         file: null
       });
       return;
     }
 
     // filter out invalid file items, used to filter dropped directory contents
-    if (
-      isFile(source) &&
-      state.options.ignoredFiles.includes(source.name.toLowerCase())
-    ) {
-      // fail silently
-      return;
+    if (source instanceof Blob) {
+      if (state.options.ignoredFiles.includes(source.name.toLowerCase())) {
+        // fail silently
+        return;
+      }
     }
 
     // test if there's still room in the list of files
@@ -3769,7 +3334,7 @@ const actions = (dispatch, query, state) => ({
         state.options.allowMultiple ||
         (!state.options.allowMultiple && !state.options.allowReplace)
       ) {
-        const error = createResponse('warning', 0, 'Max files');
+        const error = createResponse$1('warning', 0, 'Max files');
 
         dispatch('DID_THROW_MAX_FILES', {
           source,
@@ -3777,44 +3342,15 @@ const actions = (dispatch, query, state) => ({
         });
 
         failure({ error, file: null });
-
         return;
       }
 
-      // let's replace the item
       // id of first item we're about to remove
-      const item = getActiveItems(state.items)[0];
+      const item = state.items[0];
 
       // if has been processed remove it from the server as well
-      if (
-        item.status === ItemStatus$1.PROCESSING_COMPLETE ||
-        item.status === ItemStatus$1.PROCESSING_REVERT_ERROR
-      ) {
-        const forceRevert = query('GET_FORCE_REVERT');
-        item
-          .revert(
-            createRevertFunction(
-              state.options.server.url,
-              state.options.server.revert
-            ),
-            forceRevert
-          )
-          .then(() => {
-            if (!forceRevert) return;
-
-            // try to add now
-            dispatch('ADD_ITEM', {
-              source,
-              index,
-              interactionMethod,
-              success,
-              failure,
-              options
-            });
-          })
-          .catch(() => {}); // no need to handle this catch state for now
-
-        if (forceRevert) return;
+      if (item.status === ItemStatus.PROCESSING_COMPLETE) {
+        dispatch('REVERT_ITEM_PROCESSING', { query: item.id });
       }
 
       // remove first item as it will be replaced by this item
@@ -3824,18 +3360,13 @@ const actions = (dispatch, query, state) => ({
     // where did the file originate
     const origin =
       options.type === 'local'
-        ? FileOrigin$1.LOCAL
-        : options.type === 'limbo' ? FileOrigin$1.LIMBO : FileOrigin$1.INPUT;
+        ? FileOrigin.LOCAL
+        : options.type === 'limbo' ? FileOrigin.LIMBO : FileOrigin.INPUT;
 
     // create a new blank item
     const item = createItem(
-      // where did this file come from
       origin,
-
-      // an input file never has a server file reference
-      origin === FileOrigin$1.INPUT ? null : source,
-
-      // file mock data, if defined
+      origin === FileOrigin.INPUT ? null : source,
       options.file
     );
 
@@ -3844,17 +3375,8 @@ const actions = (dispatch, query, state) => ({
       item.setMetadata(key, options.metadata[key]);
     });
 
-    // created the item, let plugins add methods
-    applyFilters('DID_CREATE_ITEM', item, { query, dispatch });
-
     // add item to list
     insertItem(state.items, item, index);
-
-    // sort items in list
-    const itemInsertLocation = query('GET_ITEM_INSERT_LOCATION');
-    if (isFunction(itemInsertLocation) && source) {
-      sortItems(state, itemInsertLocation);
-    }
 
     // get a quick reference to the item id
     const id = item.id;
@@ -3873,15 +3395,13 @@ const actions = (dispatch, query, state) => ({
     });
 
     item.on('load-request-error', error => {
-      const mainStatus = dynamicLabel(state.options.labelFileLoadError)(error);
-
       // is client error, no way to recover
       if (error.code >= 400 && error.code < 500) {
         dispatch('DID_THROW_ITEM_INVALID', {
           id,
           error,
           status: {
-            main: mainStatus,
+            main: state.options.labelFileLoadError,
             sub: `${error.code} (${error.body})`
           }
         });
@@ -3896,14 +3416,17 @@ const actions = (dispatch, query, state) => ({
         id,
         error,
         status: {
-          main: mainStatus,
+          main: state.options.labelFileLoadError,
           sub: state.options.labelTapToRetry
         }
       });
     });
 
     item.on('load-file-error', error => {
-      dispatch('DID_THROW_ITEM_INVALID', Object.assign({}, error, { id }));
+      dispatch(
+        'DID_THROW_ITEM_INVALID',
+        babelHelpers.extends({}, error, { id })
+      );
     });
 
     item.on('load-abort', () => {
@@ -3922,49 +3445,28 @@ const actions = (dispatch, query, state) => ({
     });
 
     item.on('load', () => {
-      const handleAdd = shouldAdd => {
-        // no should not add this file
-        if (!shouldAdd) {
-          dispatch('REMOVE_ITEM', {
-            query: id
-          });
-          return;
-        }
-
-        // now interested in metadata updates
-        item.on('metadata-update', change => {
-          dispatch('DID_UPDATE_ITEM_METADATA', { id, change });
-        });
-
+      // item loaded, allow plugins to
+      // - read data (quickly)
+      // - add metadata
+      applyFilterChain('DID_LOAD_ITEM', item, { query }).then(() => {
         // let plugins decide if the output data should be prepared at this point
         // means we'll do this and wait for idle state
         applyFilterChain('SHOULD_PREPARE_OUTPUT', false, { item, query }).then(
           shouldPrepareOutput => {
-            const loadComplete = () => {
-              dispatch('COMPLETE_LOAD_ITEM', {
-                query: id,
-                item,
-                data: {
-                  source,
-                  success
-                }
-              });
+            const data = {
+              source,
+              success
 
-              listUpdated(dispatch, state);
+              // exit
             };
-
-            // exit
             if (shouldPrepareOutput) {
               // wait for idle state and then run PREPARE_OUTPUT
               dispatch(
-                'REQUEST_PREPARE_OUTPUT',
+                'REQUEST_PREPARE_LOAD_ITEM',
                 {
                   query: id,
                   item,
-                  ready: file => {
-                    dispatch('DID_PREPARE_OUTPUT', { id, file });
-                    loadComplete();
-                  }
+                  data
                 },
                 true
               );
@@ -3972,24 +3474,14 @@ const actions = (dispatch, query, state) => ({
               return;
             }
 
-            loadComplete();
+            dispatch('COMPLETE_LOAD_ITEM', {
+              query: id,
+              item,
+              data
+            });
           }
         );
-      };
-
-      // item loaded, allow plugins to
-      // - read data (quickly)
-      // - add metadata
-      applyFilterChain('DID_LOAD_ITEM', item, { query, dispatch })
-        .then(() => {
-          optionalPromise(
-            query('GET_BEFORE_ADD_FILE'),
-            createItemAPI(item)
-          ).then(handleAdd);
-        })
-        .catch(() => {
-          handleAdd(false);
-        });
+      });
     });
 
     item.on('process-start', () => {
@@ -4005,23 +3497,23 @@ const actions = (dispatch, query, state) => ({
         id,
         error,
         status: {
-          main: dynamicLabel(state.options.labelFileProcessingError)(error),
+          main: state.options.labelFileProcessingError,
           sub: state.options.labelTapToRetry
         }
       });
     });
 
-    item.on('process-revert-error', error => {
-      dispatch('DID_THROW_ITEM_PROCESSING_REVERT_ERROR', {
-        id,
-        error,
-        status: {
-          main: dynamicLabel(state.options.labelFileProcessingRevertError)(
-            error
-          ),
-          sub: state.options.labelTapToRetry
-        }
-      });
+    item.on('process-abort', serverFileReference => {
+      // we'll revert any processed items
+      dispatch('REVERT_ITEM_PROCESSING', { query: id });
+
+      // if we're instant uploading, the item is removed
+      if (state.options.instantUpload) {
+        dispatch('REMOVE_ITEM', { query: id });
+      } else {
+        // we stopped processing
+        dispatch('DID_ABORT_ITEM_PROCESSING', { id });
+      }
     });
 
     item.on('process-complete', serverFileReference => {
@@ -4032,18 +3524,18 @@ const actions = (dispatch, query, state) => ({
       });
     });
 
-    item.on('process-abort', () => {
-      dispatch('DID_ABORT_ITEM_PROCESSING', { id });
-    });
-
     item.on('process-revert', () => {
-      dispatch('DID_REVERT_ITEM_PROCESSING', { id });
+      // if is instant upload remove the item
+      // or is a fake file
+      if (state.options.instantUpload || options.file) {
+        dispatch('REMOVE_ITEM', { query: id });
+      } else {
+        dispatch('DID_REVERT_ITEM_PROCESSING', { id });
+      }
     });
 
     // let view know the item has been inserted
     dispatch('DID_ADD_ITEM', { id, index, interactionMethod });
-
-    listUpdated(dispatch, state);
 
     // start loading the source
     const { url, load, restore, fetch } = state.options.server || {};
@@ -4053,13 +3545,13 @@ const actions = (dispatch, query, state) => ({
 
       // this creates a function that loads the file based on the type of file (string, base64, blob, file) and location of file (local, remote, limbo)
       createFileLoader(
-        origin === FileOrigin$1.INPUT
+        origin === FileOrigin.INPUT
           ? // input
             isString(source) && isExternalURL(source)
             ? createFetchFunction(url, fetch) // remote url
             : fetchLocal // local url
           : // limbo or local
-            origin === FileOrigin$1.LIMBO
+            origin === FileOrigin.LIMBO
             ? createFetchFunction(url, restore) // limbo
             : createFetchFunction(url, load) // local
       ),
@@ -4074,7 +3566,7 @@ const actions = (dispatch, query, state) => ({
     );
   },
 
-  REQUEST_PREPARE_OUTPUT: ({ item, ready }) => {
+  REQUEST_PREPARE_LOAD_ITEM: ({ item, data }) => {
     // allow plugins to alter the file data
     applyFilterChain('PREPARE_OUTPUT', item.file, { query, item }).then(
       result => {
@@ -4082,7 +3574,10 @@ const actions = (dispatch, query, state) => ({
           query,
           item
         }).then(result => {
-          ready(result);
+          dispatch('COMPLETE_LOAD_ITEM', {
+            item,
+            data
+          });
         });
       }
     );
@@ -4091,17 +3586,11 @@ const actions = (dispatch, query, state) => ({
   COMPLETE_LOAD_ITEM: ({ item, data }) => {
     const { success, source } = data;
 
-    // sort items in list
-    const itemInsertLocation = query('GET_ITEM_INSERT_LOCATION');
-    if (isFunction(itemInsertLocation) && source) {
-      sortItems(state, itemInsertLocation);
-    }
-
     // let interface know the item has loaded
     dispatch('DID_LOAD_ITEM', {
       id: item.id,
       error: null,
-      serverFileReference: item.origin === FileOrigin$1.INPUT ? null : source
+      serverFileReference: item.origin === FileOrigin.INPUT ? null : source
     });
 
     // item has been successfully loaded and added to the
@@ -4109,13 +3598,13 @@ const actions = (dispatch, query, state) => ({
     success(createItemAPI(item));
 
     // if this is a local server file we need to show a different state
-    if (item.origin === FileOrigin$1.LOCAL) {
+    if (item.origin === FileOrigin.LOCAL) {
       dispatch('DID_LOAD_LOCAL_ITEM', { id: item.id });
       return;
     }
 
     // if is a temp server file we prevent async upload call here (as the file is already on the server)
-    if (item.origin === FileOrigin$1.LIMBO) {
+    if (item.origin === FileOrigin.LIMBO) {
       dispatch('DID_COMPLETE_ITEM_PROCESSING', {
         id: item.id,
         error: null,
@@ -4135,101 +3624,18 @@ const actions = (dispatch, query, state) => ({
     item.retryLoad();
   }),
 
-  REQUEST_ITEM_PROCESSING: getItemByQueryFromState(
-    state,
-    (item, success, failure) => {
-      // cannot be queued (or is already queued)
-      const itemCanBeQueuedForProcessing =
-        // waiting for something
-        item.status === ItemStatus$1.IDLE ||
-        // processing went wrong earlier
-        item.status === ItemStatus$1.PROCESSING_ERROR;
+  REQUEST_ITEM_PROCESSING: getItemByQueryFromState(state, item => {
+    const id = item.id;
 
-      // not ready to be processed
-      if (!itemCanBeQueuedForProcessing) {
-        const process = () => {
-          setTimeout(() => {
-            dispatch('REQUEST_ITEM_PROCESSING', {
-              query: item,
-              success,
-              failure
-            });
-          }, 32);
-        };
+    dispatch('DID_REQUEST_ITEM_PROCESSING', { id });
 
-        // if already done processing or tried to revert but didn't work, try again
-        if (
-          item.status === ItemStatus$1.PROCESSING_COMPLETE ||
-          item.status === ItemStatus$1.PROCESSING_REVERT_ERROR
-        ) {
-          item
-            .revert(
-              createRevertFunction(
-                state.options.server.url,
-                state.options.server.revert
-              ),
-              query('GET_FORCE_REVERT')
-            )
-            .then(process)
-            .catch(() => {}); // don't continue with processing if something went wrong
-        } else if (item.status === ItemStatus$1.PROCESSING) {
-          item.abortProcessing().then(process);
-        }
-
-        return;
-      }
-
-      // already queued for processing
-      if (item.status === ItemStatus$1.PROCESSING_QUEUED) return;
-
-      item.requestProcessing();
-
-      dispatch('DID_REQUEST_ITEM_PROCESSING', { id: item.id });
-
-      dispatch('PROCESS_ITEM', { query: item, success, failure }, true);
-    }
-  ),
+    dispatch('PROCESS_ITEM', { query: item }, true);
+  }),
 
   PROCESS_ITEM: getItemByQueryFromState(state, (item, success, failure) => {
-    const maxParallelUploads = query('GET_MAX_PARALLEL_UPLOADS');
-    const totalCurrentUploads = query(
-      'GET_ITEMS_BY_STATUS',
-      ItemStatus$1.PROCESSING
-    ).length;
-
-    // queue and wait till queue is freed up
-    if (totalCurrentUploads === maxParallelUploads) {
-      // queue for later processing
-      state.processingQueue.push({
-        item,
-        success,
-        failure
-      });
-
-      // stop it!
-      return;
-    }
-
-    // if was not queued or is already processing exit here
-    if (item.status === ItemStatus$1.PROCESSING) return;
-
     // we done function
     item.onOnce('process-complete', () => {
-      // done!
       success(createItemAPI(item));
-
-      // process queueud items
-      const queued = state.processingQueue.shift();
-      if (!queued) return;
-      dispatch(
-        'PROCESS_ITEM',
-        {
-          query: queued.item,
-          success: queued.success,
-          failure: queued.failure
-        },
-        true
-      );
     });
 
     // we error function
@@ -4249,12 +3655,11 @@ const actions = (dispatch, query, state) => ({
       // called when the file is about to be processed so it can be piped through the transform filters
       (file, success, error) => {
         // allow plugins to alter the file data
-        applyFilterChain('PREPARE_OUTPUT', file, { query, item })
-          .then(file => {
-            dispatch('DID_PREPARE_OUTPUT', { id: item.id, file });
-
-            success(file);
-          })
+        applyFilterChain('PREPARE_OUTPUT', file, {
+          query,
+          item
+        })
+          .then(success)
           .catch(error);
       }
     );
@@ -4264,137 +3669,50 @@ const actions = (dispatch, query, state) => ({
     dispatch('REQUEST_ITEM_PROCESSING', { query: item });
   }),
 
-  REQUEST_REMOVE_ITEM: getItemByQueryFromState(state, item => {
-    optionalPromise(query('GET_BEFORE_REMOVE_FILE'), createItemAPI(item)).then(
-      shouldRemove => {
-        if (!shouldRemove) {
-          return;
-        }
-        dispatch('REMOVE_ITEM', { query: item });
-      }
-    );
-  }),
-
-  RELEASE_ITEM: getItemByQueryFromState(state, item => {
-    item.release();
-  }),
-
   REMOVE_ITEM: getItemByQueryFromState(state, (item, success) => {
-    const removeFromView = () => {
-      // get id reference
-      const id = item.id;
+    // get id reference
+    const id = item.id;
 
-      // archive the item, this does not remove it from the list
-      getItemById(state.items, id).archive();
+    // tell the view the item has been removed
+    dispatch('DID_REMOVE_ITEM', { id, item });
 
-      // tell the view the item has been removed
-      dispatch('DID_REMOVE_ITEM', { id, item });
+    // now remove it from the item list,
+    // we remove it from the list after the view has been updated
+    // to make sure the item is available for view rendering till removed
+    dispatch('SPLICE_ITEM', { id, item });
 
-      // now the list has been modified
-      listUpdated(dispatch, state);
-
-      // correctly removed
-      success(createItemAPI(item));
-    };
-
-    // if this is a local file and the server.remove function has been configured, send source there so dev can remove file from server
-    const server = state.options.server;
-    if (
-      item.origin === FileOrigin$1.LOCAL &&
-      server &&
-      isFunction(server.remove)
-    ) {
-      dispatch('DID_START_ITEM_REMOVE', { id: item.id });
-
-      server.remove(
-        item.source,
-        () => removeFromView(),
-        status => {
-          dispatch('DID_THROW_ITEM_REMOVE_ERROR', {
-            id: item.id,
-            error: createResponse('error', 0, status, null),
-            status: {
-              main: dynamicLabel(state.options.labelFileRemoveError)(status),
-              sub: state.options.labelTapToRetry
-            }
-          });
-        }
-      );
-    } else {
-      removeFromView();
-    }
+    // correctly removed
+    success(createItemAPI(item));
   }),
+
+  // private action for timing the removal of an item from the items list
+  SPLICE_ITEM: ({ id }) =>
+    removeItem(state.items, getItemById(state.items, id)),
 
   ABORT_ITEM_LOAD: getItemByQueryFromState(state, item => {
+    // stop loading this file
     item.abortLoad();
+
+    // the file will throw an event and that will take
+    // care of removing the item from the list
   }),
 
   ABORT_ITEM_PROCESSING: getItemByQueryFromState(state, item => {
-    // test if is already processed
-    if (item.serverId) {
-      dispatch('REVERT_ITEM_PROCESSING', { id: item.id });
-      return;
-    }
+    // stop processing this file
+    item.abortProcessing();
 
-    // abort
-    item.abortProcessing().then(() => {
-      const shouldRemove = state.options.instantUpload;
-      if (shouldRemove) {
-        dispatch('REMOVE_ITEM', { query: item.id });
-      }
-    });
-  }),
-
-  REQUEST_REVERT_ITEM_PROCESSING: getItemByQueryFromState(state, item => {
-    // not instant uploading, revert immidiately
-    if (!state.options.instantUpload) {
-      dispatch('REVERT_ITEM_PROCESSING', { query: item });
-      return;
-    }
-
-    // if we're instant uploading the file will also be removed if we revert,
-    // so if a before remove file hook is defined we need to run it now
-    const handleRevert = shouldRevert => {
-      if (!shouldRevert) return;
-      dispatch('REVERT_ITEM_PROCESSING', { query: item });
-    };
-
-    const fn = query('GET_BEFORE_REMOVE_FILE');
-    if (!fn) {
-      return handleRevert(true);
-    }
-
-    const requestRemoveResult = fn(createItemAPI(item));
-    if (requestRemoveResult == null) {
-      // undefined or null
-      return handleRevert(true);
-    }
-
-    if (typeof requestRemoveResult === 'boolean') {
-      return handleRevert(requestRemoveResult);
-    }
-
-    if (typeof requestRemoveResult.then === 'function') {
-      requestRemoveResult.then(handleRevert);
-    }
+    // the file will throw an event and that will take
+    // care of removing the item from the list
   }),
 
   REVERT_ITEM_PROCESSING: getItemByQueryFromState(state, item => {
-    item
-      .revert(
-        createRevertFunction(
-          state.options.server.url,
-          state.options.server.revert
-        ),
-        query('GET_FORCE_REVERT')
+    // remove from server
+    item.revert(
+      createRevertFunction(
+        state.options.server.url,
+        state.options.server.revert
       )
-      .then(() => {
-        const shouldRemove = state.options.instantUpload || isMockItem(item);
-        if (shouldRemove) {
-          dispatch('REMOVE_ITEM', { query: item.id });
-        }
-      })
-      .catch(() => {});
+    );
   }),
 
   SET_OPTIONS: ({ options }) => {
@@ -4404,11 +3722,11 @@ const actions = (dispatch, query, state) => ({
   }
 });
 
-const formatFilename = name => name;
-
 const createElement$1 = tagName => {
   return document.createElement(tagName);
 };
+
+const formatFilename = name => decodeURI(name);
 
 const text = (node, value) => {
   let textNode = node.childNodes[0];
@@ -4488,10 +3806,6 @@ const write$5 = ({ root, props }) => {
     return;
   }
 
-  if (props.align) {
-    root.element.dataset.align = props.align;
-  }
-
   // get width of stroke
   const ringStrokeWidth = parseInt(attr(root.ref.path, 'stroke-width'), 10);
 
@@ -4534,12 +3848,11 @@ const write$5 = ({ root, props }) => {
 const progressIndicator = createView({
   tag: 'div',
   name: 'progress-indicator',
-  ignoreRectUpdate: true,
   ignoreRect: true,
   create: create$7,
   write: write$5,
   mixins: {
-    apis: ['progress', 'spin', 'align'],
+    apis: ['progress', 'spin'],
     styles: ['opacity'],
     animations: {
       opacity: { type: 'tween', duration: 500 },
@@ -4575,7 +3888,6 @@ const fileActionButton = createView({
     type: 'button'
   },
   ignoreRect: true,
-  ignoreRectUpdate: true,
   name: 'file-action-button',
   mixins: {
     apis: ['label'],
@@ -4673,7 +3985,6 @@ const updateFileSizeOnError = ({ root, props }) => {
 const fileInfo = createView({
   name: 'file-info',
   ignoreRect: true,
-  ignoreRectUpdate: true,
   write: createRoute({
     DID_LOAD_ITEM: updateFile,
     DID_UPDATE_ITEM_META: updateFile,
@@ -4681,7 +3992,7 @@ const fileInfo = createView({
     DID_THROW_ITEM_INVALID: updateFileSizeOnError
   }),
   didCreateView: root => {
-    applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
+    applyFilters('CREATE_VIEW', babelHelpers.extends({}, root, { view: root }));
   },
   create: create$9,
   mixins: {
@@ -4761,7 +4072,6 @@ const error = ({ root, action }) => {
 const fileStatus = createView({
   name: 'file-status',
   ignoreRect: true,
-  ignoreRectUpdate: true,
   write: createRoute({
     DID_LOAD_ITEM: clear,
     DID_REVERT_ITEM_PROCESSING: clear,
@@ -4772,12 +4082,10 @@ const fileStatus = createView({
     DID_UPDATE_ITEM_LOAD_PROGRESS: didSetItemLoadProgress,
     DID_THROW_ITEM_LOAD_ERROR: error,
     DID_THROW_ITEM_INVALID: error,
-    DID_THROW_ITEM_PROCESSING_ERROR: error,
-    DID_THROW_ITEM_PROCESSING_REVERT_ERROR: error,
-    DID_THROW_ITEM_REMOVE_ERROR: error
+    DID_THROW_ITEM_PROCESSING_ERROR: error
   }),
   didCreateView: root => {
-    applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
+    applyFilters('CREATE_VIEW', babelHelpers.extends({}, root, { view: root }));
   },
   create: create$10,
   mixins: {
@@ -4793,54 +4101,46 @@ const fileStatus = createView({
 /**
  * Button definitions for the file view
  */
-
 const Buttons = {
   AbortItemLoad: {
     label: 'GET_LABEL_BUTTON_ABORT_ITEM_LOAD',
     action: 'ABORT_ITEM_LOAD',
-    className: 'filepond--action-abort-item-load',
-    align: 'LOAD_INDICATOR_POSITION' // right
+    className: 'filepond--action-abort-item-load'
   },
   RetryItemLoad: {
     label: 'GET_LABEL_BUTTON_RETRY_ITEM_LOAD',
     action: 'RETRY_ITEM_LOAD',
     icon: 'GET_ICON_RETRY',
-    className: 'filepond--action-retry-item-load',
-    align: 'BUTTON_PROCESS_ITEM_POSITION' // right
+    className: 'filepond--action-retry-item-load'
   },
   RemoveItem: {
     label: 'GET_LABEL_BUTTON_REMOVE_ITEM',
-    action: 'REQUEST_REMOVE_ITEM',
+    action: 'REMOVE_ITEM',
     icon: 'GET_ICON_REMOVE',
-    className: 'filepond--action-remove-item',
-    align: 'BUTTON_REMOVE_ITEM_POSITION' // left
+    className: 'filepond--action-remove-item'
   },
   ProcessItem: {
     label: 'GET_LABEL_BUTTON_PROCESS_ITEM',
     action: 'REQUEST_ITEM_PROCESSING',
     icon: 'GET_ICON_PROCESS',
-    className: 'filepond--action-process-item',
-    align: 'BUTTON_PROCESS_ITEM_POSITION' // right
+    className: 'filepond--action-process-item'
   },
   AbortItemProcessing: {
     label: 'GET_LABEL_BUTTON_ABORT_ITEM_PROCESSING',
     action: 'ABORT_ITEM_PROCESSING',
-    className: 'filepond--action-abort-item-processing',
-    align: 'BUTTON_PROCESS_ITEM_POSITION' // right
+    className: 'filepond--action-abort-item-processing'
   },
   RetryItemProcessing: {
     label: 'GET_LABEL_BUTTON_RETRY_ITEM_PROCESSING',
     action: 'RETRY_ITEM_PROCESSING',
     icon: 'GET_ICON_RETRY',
-    className: 'filepond--action-retry-item-processing',
-    align: 'BUTTON_PROCESS_ITEM_POSITION' // right
+    className: 'filepond--action-retry-item-processing'
   },
   RevertItemProcessing: {
     label: 'GET_LABEL_BUTTON_UNDO_ITEM_PROCESSING',
-    action: 'REQUEST_REVERT_ITEM_PROCESSING',
+    action: 'REVERT_ITEM_PROCESSING',
     icon: 'GET_ICON_UNDO',
-    className: 'filepond--action-revert-item-processing',
-    align: 'BUTTON_PROCESS_ITEM_POSITION' // right
+    className: 'filepond--action-revert-item-processing'
   }
 };
 
@@ -4860,13 +4160,6 @@ const calculateFileVerticalCenterOffset = root =>
 const calculateFileHorizontalCenterOffset = root =>
   Math.floor(root.ref.buttonRemoveItem.rect.element.left / 2);
 
-const getLoadIndicatorAlignment = root =>
-  root.query('GET_STYLE_LOAD_INDICATOR_POSITION');
-const getProcessIndicatorAlignment = root =>
-  root.query('GET_STYLE_PROGRESS_INDICATOR_POSITION');
-const getRemoveIndicatorAligment = root =>
-  root.query('GET_STYLE_BUTTON_REMOVE_ITEM_POSITION');
-
 const DefaultStyle = {
   buttonAbortItemLoad: { opacity: 0 },
   buttonRetryItemLoad: { opacity: 0 },
@@ -4875,8 +4168,8 @@ const DefaultStyle = {
   buttonAbortItemProcessing: { opacity: 0 },
   buttonRetryItemProcessing: { opacity: 0 },
   buttonRevertItemProcessing: { opacity: 0 },
-  loadProgressIndicator: { opacity: 0, align: getLoadIndicatorAlignment },
-  processProgressIndicator: { opacity: 0, align: getProcessIndicatorAlignment },
+  loadProgressIndicator: { opacity: 0 },
+  processProgressIndicator: { opacity: 0 },
   processingCompleteIndicator: { opacity: 0, scaleX: 0.75, scaleY: 0.75 },
   info: { translateX: 0, translateY: 0, opacity: 0 },
   status: { translateX: 0, translateY: 0, opacity: 0 }
@@ -4901,7 +4194,6 @@ const StyleMap = {
     info: { translateX: calculateFileInfoOffset },
     status: { translateX: calculateFileInfoOffset, opacity: 1 }
   },
-
   DID_START_ITEM_LOAD: {
     buttonAbortItemLoad: { opacity: 1 },
     loadProgressIndicator: { opacity: 1 },
@@ -4913,20 +4205,6 @@ const StyleMap = {
     info: { translateX: calculateFileInfoOffset },
     status: { opacity: 1 }
   },
-
-  DID_START_ITEM_REMOVE: {
-    processProgressIndicator: { opacity: 1, align: getRemoveIndicatorAligment },
-    info: { translateX: calculateFileInfoOffset },
-    status: { opacity: 0 }
-  },
-
-  DID_THROW_ITEM_REMOVE_ERROR: {
-    processProgressIndicator: { opacity: 0, align: getRemoveIndicatorAligment },
-    buttonRemoveItem: { opacity: 1 },
-    info: { translateX: calculateFileInfoOffset },
-    status: { opacity: 1, translateX: calculateFileInfoOffset }
-  },
-
   DID_LOAD_ITEM: IdleStyle,
   DID_LOAD_LOCAL_ITEM: {
     buttonRemoveItem: { opacity: 1 },
@@ -4946,11 +4224,6 @@ const StyleMap = {
     buttonRetryItemProcessing: { opacity: 1 },
     status: { opacity: 1 },
     info: { translateX: calculateFileInfoOffset }
-  },
-  DID_THROW_ITEM_PROCESSING_REVERT_ERROR: {
-    buttonRevertItemProcessing: { opacity: 1 },
-    status: { opacity: 1 },
-    info: { opacity: 1 }
   },
   DID_ABORT_ITEM_PROCESSING: {
     buttonRemoveItem: { opacity: 1 },
@@ -4982,36 +4255,22 @@ const processingCompleteIndicatorView = createView({
  * Creates the file view
  */
 const create$6 = ({ root, props }) => {
-  const { id } = props;
-
   // allow reverting upload
   const allowRevert = root.query('GET_ALLOW_REVERT');
 
-  // is instant uploading, need this to determine the icon of the undo button
-  const instantUpload = root.query('GET_INSTANT_UPLOAD');
-
-  // is async set up
-  const isAsync = root.query('IS_ASYNC');
-
   // enabled buttons array
-  const enabledButtons = isAsync
+  const enabledButtons = root.query('IS_ASYNC')
     ? ButtonKeys.concat()
     : ButtonKeys.filter(key => !/Process/.test(key));
 
   // remove last button (revert) if not allowed
-  if (isAsync && !allowRevert) {
+  if (!allowRevert) {
     enabledButtons.splice(-1, 1);
     const map = StyleMap['DID_COMPLETE_ITEM_PROCESSING'];
     map.info.translateX = calculateFileHorizontalCenterOffset;
     map.info.translateY = calculateFileVerticalCenterOffset;
     map.status.translateY = calculateFileVerticalCenterOffset;
     map.processingCompleteIndicator = { opacity: 1, scaleX: 1, scaleY: 1 };
-  }
-
-  // update icon and label for revert button when instant uploading
-  if (instantUpload && allowRevert) {
-    Buttons['RevertItemProcessing'].label = 'GET_LABEL_BUTTON_REMOVE_ITEM';
-    Buttons['RevertItemProcessing'].icon = 'GET_ICON_REMOVE';
   }
 
   // create the button views
@@ -5028,17 +4287,12 @@ const create$6 = ({ root, props }) => {
       root.appendChildView(buttonView);
     }
 
-    // add position attribute
-    buttonView.element.dataset.align = root.query(
-      `GET_STYLE_${definition.align}`
-    );
-
     // add class
     buttonView.element.classList.add(definition.className);
 
     // handle interactions
     buttonView.on('click', () => {
-      root.dispatch(definition.action, { query: id });
+      root.dispatch(definition.action, { query: props.id });
     });
 
     // set reference
@@ -5046,44 +4300,40 @@ const create$6 = ({ root, props }) => {
   });
 
   // create file info view
-  root.ref.info = root.appendChildView(root.createChildView(fileInfo, { id }));
+  root.ref.info = root.appendChildView(
+    root.createChildView(fileInfo, { id: props.id })
+  );
 
   // create file status view
   root.ref.status = root.appendChildView(
-    root.createChildView(fileStatus, { id })
+    root.createChildView(fileStatus, { id: props.id })
   );
 
   // checkmark
   root.ref.processingCompleteIndicator = root.appendChildView(
     root.createChildView(processingCompleteIndicatorView)
   );
-  root.ref.processingCompleteIndicator.element.dataset.align = root.query(
-    `GET_STYLE_BUTTON_PROCESS_ITEM_POSITION`
-  );
 
   // add progress indicators
-  const loadIndicatorView = root.appendChildView(
-    root.createChildView(progressIndicator, {
-      opacity: 0,
-      align: root.query(`GET_STYLE_LOAD_INDICATOR_POSITION`)
-    })
+  root.ref.loadProgressIndicator = root.appendChildView(
+    root.createChildView(progressIndicator, { opacity: 0 })
   );
-  loadIndicatorView.element.classList.add('filepond--load-indicator');
-  root.ref.loadProgressIndicator = loadIndicatorView;
+  root.ref.loadProgressIndicator.element.classList.add(
+    'filepond--load-indicator'
+  );
 
-  const progressIndicatorView = root.appendChildView(
-    root.createChildView(progressIndicator, {
-      opacity: 0,
-      align: root.query(`GET_STYLE_PROGRESS_INDICATOR_POSITION`)
-    })
+  root.ref.processProgressIndicator = root.appendChildView(
+    root.createChildView(progressIndicator, { opacity: 0 })
   );
-  progressIndicatorView.element.classList.add('filepond--process-indicator');
-  root.ref.processProgressIndicator = progressIndicatorView;
+
+  root.ref.processProgressIndicator.element.classList.add(
+    'filepond--process-indicator'
+  );
 };
 
 const write$4 = ({ root, actions, props }) => {
   // route actions
-  route$4({ root, actions, props });
+  route$3({ root, actions, props });
 
   // select last state change action
   let action = [...actions]
@@ -5092,13 +4342,13 @@ const write$4 = ({ root, actions, props }) => {
     .find(action => StyleMap[action.type]);
 
   // no need to set same state twice
-  if (!action || (action && action.type === root.ref.currentAction)) {
+  if (!action || (action && action.type === props.currentStyle)) {
     return;
   }
 
   // set current state
-  root.ref.currentAction = action.type;
-  const newStyles = StyleMap[root.ref.currentAction];
+  props.currentStyle = action.type;
+  const newStyles = StyleMap[props.currentStyle];
 
   forin(DefaultStyle, (name, defaultStyles) => {
     // get reference to control
@@ -5115,27 +4365,20 @@ const write$4 = ({ root, actions, props }) => {
   });
 };
 
-const route$4 = createRoute({
+const route$3 = createRoute({
   DID_SET_LABEL_BUTTON_ABORT_ITEM_PROCESSING: ({ root, action }) => {
     root.ref.buttonAbortItemProcessing.label = action.value;
   },
   DID_SET_LABEL_BUTTON_ABORT_ITEM_LOAD: ({ root, action }) => {
     root.ref.buttonAbortItemLoad.label = action.value;
   },
-  DID_SET_LABEL_BUTTON_ABORT_ITEM_REMOVAL: ({ root, action }) => {
-    root.ref.buttonAbortItemRemoval.label = action.value;
-  },
-  DID_REQUEST_ITEM_PROCESSING: ({ root }) => {
+  DID_REQUEST_ITEM_PROCESSING: ({ root, action }) => {
     root.ref.processProgressIndicator.spin = true;
     root.ref.processProgressIndicator.progress = 0;
   },
-  DID_START_ITEM_LOAD: ({ root }) => {
+  DID_START_ITEM_LOAD: ({ root, action }) => {
     root.ref.loadProgressIndicator.spin = true;
     root.ref.loadProgressIndicator.progress = 0;
-  },
-  DID_START_ITEM_REMOVE: ({ root }) => {
-    root.ref.processProgressIndicator.spin = true;
-    root.ref.processProgressIndicator.progress = 0;
   },
   DID_UPDATE_ITEM_LOAD_PROGRESS: ({ root, action }) => {
     root.ref.loadProgressIndicator.spin = false;
@@ -5151,7 +4394,7 @@ const file = createView({
   create: create$6,
   write: write$4,
   didCreateView: root => {
-    applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
+    applyFilters('CREATE_VIEW', babelHelpers.extends({}, root, { view: root }));
   },
   name: 'file'
 });
@@ -5190,7 +4433,7 @@ const didLoadItem = ({ root, action, props }) => {
   );
 };
 
-const didRemoveItem = ({ root }) => {
+const didRemoveItem = ({ root, action }) => {
   root.ref.data.removeAttribute('value');
 };
 
@@ -5204,7 +4447,6 @@ const didRevertItemProcessing = ({ root, action }) => {
 
 const fileWrapper = createView({
   create: create$5,
-  ignoreRect: true,
   write: createRoute({
     DID_LOAD_ITEM: didLoadItem,
     DID_REMOVE_ITEM: didRemoveItem,
@@ -5212,7 +4454,7 @@ const fileWrapper = createView({
     DID_REVERT_ITEM_PROCESSING: didRevertItemProcessing
   }),
   didCreateView: root => {
-    applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
+    applyFilters('CREATE_VIEW', babelHelpers.extends({}, root, { view: root }));
   },
   tag: 'fieldset',
   name: 'file-wrapper'
@@ -5255,15 +4497,12 @@ const create$11 = ({ root, props }) => {
   });
 
   root.element.classList.add(`filepond--${props.name}`);
-
-  root.ref.scalable = null;
 };
 
 const createSection = (root, section, className) => {
   const viewConstructor = createView({
     name: `panel-${section.name} filepond--${className}`,
-    mixins: section.mixins,
-    ignoreRectUpdate: true
+    mixins: section.mixins
   });
 
   const view = root.createChildView(viewConstructor, section.props);
@@ -5272,16 +4511,14 @@ const createSection = (root, section, className) => {
 };
 
 const write$7 = ({ root, props }) => {
-  // update scalable state
-  if (root.ref.scalable === null || props.scalable !== root.ref.scalable) {
-    root.ref.scalable = isBoolean(props.scalable) ? props.scalable : true;
-    root.element.dataset.scalable = root.ref.scalable;
-  }
-
-  // no height, can't set
   if (!props.height) {
     return;
   }
+
+  // can it scale?
+  root.element.dataset.scalable = isBoolean(props.scalable)
+    ? props.scalable
+    : true;
 
   // get child rects
   const topRect = root.ref.top.rect.element;
@@ -5311,24 +4548,12 @@ const panel = createView({
   }
 });
 
-const ITEM_TRANSLATE_SPRING = {
-  type: 'spring',
-  stiffness: 0.75,
-  damping: 0.45,
-  mass: 10
-};
-
-const ITEM_SCALE_SPRING = 'spring';
-
 /**
  * Creates the file view
  */
 const create$4 = ({ root, props }) => {
-  // set id
-  root.element.id = `filepond--item-${props.id}`;
-
   // file view
-  root.ref.container = root.appendChildView(
+  root.ref.controls = root.appendChildView(
     root.createChildView(fileWrapper, { id: props.id })
   );
 
@@ -5350,45 +4575,21 @@ const StateMap = {
   DID_THROW_ITEM_INVALID: 'load-invalid',
   DID_THROW_ITEM_LOAD_ERROR: 'load-error',
   DID_LOAD_ITEM: 'idle',
-  DID_THROW_ITEM_REMOVE_ERROR: 'remove-error',
-  DID_START_ITEM_REMOVE: 'busy',
   DID_START_ITEM_PROCESSING: 'busy',
   DID_REQUEST_ITEM_PROCESSING: 'busy',
   DID_UPDATE_ITEM_PROCESS_PROGRESS: 'processing',
   DID_COMPLETE_ITEM_PROCESSING: 'processing-complete',
   DID_THROW_ITEM_PROCESSING_ERROR: 'processing-error',
-  DID_THROW_ITEM_PROCESSING_REVERT_ERROR: 'processing-revert-error',
   DID_ABORT_ITEM_PROCESSING: 'cancelled',
   DID_REVERT_ITEM_PROCESSING: 'idle'
 };
 
-const route$3 = createRoute({
-  DID_UPDATE_PANEL_HEIGHT: ({ root, action }) => {
-    const { height } = action;
-    root.height = height;
-  }
-});
+const write$3 = ({ root, actions, props }) => {
+  // update panel height
+  root.ref.panel.height = root.ref.controls.rect.inner.height;
 
-const write$3 = ({ root, actions, props, shouldOptimize }) => {
-  // route actions
-  const aspectRatio =
-    root.query('GET_ITEM_PANEL_ASPECT_RATIO') ||
-    root.query('GET_PANEL_ASPECT_RATIO');
-  if (!aspectRatio) {
-    route$3({ root, actions, props });
-    if (!root.height) {
-      root.height = root.ref.container.rect.element.height;
-    }
-  } else if (!shouldOptimize) {
-    root.height = root.rect.element.width * aspectRatio;
-  }
-
-  // sync panel height with item height
-  if (shouldOptimize) {
-    root.ref.panel.height = null;
-  }
-
-  root.ref.panel.height = root.height;
+  // set panel height
+  root.height = root.ref.controls.rect.inner.height;
 
   // select last state change action
   let action = [...actions]
@@ -5397,7 +4598,9 @@ const write$3 = ({ root, actions, props, shouldOptimize }) => {
     .find(action => StateMap[action.type]);
 
   // no need to set same state twice
-  if (!action || (action && action.type === props.currentState)) return;
+  if (!action || (action && action.type === props.currentState)) {
+    return;
+  }
 
   // set current state
   props.currentState = action.type;
@@ -5409,13 +4612,10 @@ const write$3 = ({ root, actions, props, shouldOptimize }) => {
 const item = createView({
   create: create$4,
   write: write$3,
-  destroy: ({ root, props }) => {
-    root.dispatch('RELEASE_ITEM', { query: props.id });
-  },
   tag: 'li',
   name: 'item',
   mixins: {
-    apis: ['id', 'interactionMethod', 'markedForRemoval', 'spawnDate'],
+    apis: ['id', 'markedForRemoval'],
     styles: [
       'translateX',
       'translateY',
@@ -5425,82 +4625,18 @@ const item = createView({
       'height'
     ],
     animations: {
-      scaleX: ITEM_SCALE_SPRING,
-      scaleY: ITEM_SCALE_SPRING,
-      translateX: ITEM_TRANSLATE_SPRING,
-      translateY: ITEM_TRANSLATE_SPRING,
-      opacity: { type: 'tween', duration: 150 }
+      scaleX: 'spring',
+      scaleY: 'spring',
+      translateX: 'spring',
+      translateY: 'spring',
+      opacity: { type: 'tween', duration: 250 }
     }
   }
 });
 
-const getItemIndexByPosition = (view, positionInView) => {
-  if (!positionInView) return;
-
-  const horizontalSpace = view.rect.element.width;
-  const children = view.childViews;
-  const l = children.length;
-  let last = null;
-
-  // -1, don't move items to accomodate (either add to top or bottom)
-  if (l === 0 || positionInView.top < children[0].rect.element.top) return -1;
-
-  // let's get the item width
-  const item = children[0];
-  const itemRect = item.rect.element;
-  const itemHorizontalMargin = itemRect.marginLeft + itemRect.marginRight;
-  const itemWidth = itemRect.width + itemHorizontalMargin;
-  const itemsPerRow = Math.round(horizontalSpace / itemWidth);
-
-  // stack
-  if (itemsPerRow === 1) {
-    for (let index = 0; index < l; index++) {
-      const child = children[index];
-      const childMid = child.rect.outer.top + child.rect.element.height * 0.5;
-      if (positionInView.top < childMid) {
-        return index;
-      }
-    }
-    return l;
-  }
-
-  // grid
-  const itemVerticalMargin = itemRect.marginTop + itemRect.marginBottom;
-  const itemHeight = itemRect.height + itemVerticalMargin;
-  for (let index = 0; index < l; index++) {
-    const indexX = index % itemsPerRow;
-    const indexY = Math.floor(index / itemsPerRow);
-
-    const offsetX = indexX * itemWidth;
-    const offsetY = indexY * itemHeight;
-
-    const itemTop = offsetY - itemRect.marginTop;
-    const itemRight = offsetX + itemWidth;
-    const itemBottom = offsetY + itemHeight + itemRect.marginBottom;
-
-    if (positionInView.top < itemBottom && positionInView.top > itemTop) {
-      if (positionInView.left < itemRight) {
-        return index;
-      } else if (index !== l - 1) {
-        last = index;
-      } else {
-        last = null;
-      }
-    }
-  }
-
-  if (last !== null) {
-    return last;
-  }
-
-  return l;
-};
-
 const create$3 = ({ root, props }) => {
   // need to set role to list as otherwise it won't be read as a list by VoiceOver
   attr(root.element, 'role', 'list');
-
-  root.ref.lastItemSpanwDate = Date.now();
 };
 
 /**
@@ -5511,20 +4647,28 @@ const create$3 = ({ root, props }) => {
 const addItemView = ({ root, action }) => {
   const { id, index, interactionMethod } = action;
 
-  root.ref.addIndex = index;
+  const animation = {
+    opacity: 0
+  };
 
-  const now = Date.now();
-  let spawnDate = now;
-  let opacity = 1;
-
-  if (interactionMethod !== InteractionMethod.NONE) {
-    opacity = 0;
-    const cooldown = root.query('GET_ITEM_INSERT_INTERVAL');
-    const dist = now - root.ref.lastItemSpanwDate;
-    spawnDate = dist < cooldown ? now + (cooldown - dist) : now;
+  if (interactionMethod === InteractionMethod.NONE) {
+    animation.translateY = null;
   }
 
-  root.ref.lastItemSpanwDate = spawnDate;
+  if (interactionMethod === InteractionMethod.DROP) {
+    animation.scaleX = 0.8;
+    animation.scaleY = 0.8;
+    animation.translateY = null;
+  }
+
+  if (interactionMethod === InteractionMethod.BROWSE) {
+    animation.translateY = -30;
+  }
+
+  if (interactionMethod === InteractionMethod.API) {
+    animation.translateX = -100;
+    animation.translateY = null;
+  }
 
   root.appendChildView(
     root.createChildView(
@@ -5532,57 +4676,15 @@ const addItemView = ({ root, action }) => {
       item,
 
       // props
-      {
-        spawnDate,
-        id,
-        opacity,
-        interactionMethod
-      }
+      babelHelpers.extends(
+        {
+          id
+        },
+        animation
+      )
     ),
     index
   );
-};
-
-const moveItem = (item$$1, x, y, vx = 0, vy = 1) => {
-  item$$1.translateX = x;
-  item$$1.translateY = y;
-
-  if (Date.now() > item$$1.spawnDate) {
-    // reveal element
-    if (item$$1.opacity === 0) {
-      introItemView(item$$1, x, y, vx, vy);
-    }
-
-    // make sure is default scale every frame
-    item$$1.scaleX = 1;
-    item$$1.scaleY = 1;
-    item$$1.opacity = 1;
-  }
-};
-
-const introItemView = (item$$1, x, y, vx, vy) => {
-  if (item$$1.interactionMethod === InteractionMethod.NONE) {
-    item$$1.translateX = null;
-    item$$1.translateX = x;
-    item$$1.translateY = null;
-    item$$1.translateY = y;
-  } else if (item$$1.interactionMethod === InteractionMethod.DROP) {
-    item$$1.translateX = null;
-    item$$1.translateX = x - vx * 20;
-
-    item$$1.translateY = null;
-    item$$1.translateY = y - vy * 10;
-
-    item$$1.scaleX = 0.8;
-    item$$1.scaleY = 0.8;
-  } else if (item$$1.interactionMethod === InteractionMethod.BROWSE) {
-    item$$1.translateY = null;
-    item$$1.translateY = y - 30;
-  } else if (item$$1.interactionMethod === InteractionMethod.API) {
-    item$$1.translateX = null;
-    item$$1.translateX = x - 30;
-    item$$1.translateY = null;
-  }
 };
 
 /**
@@ -5618,136 +4720,73 @@ const route$2 = createRoute({
   DID_REMOVE_ITEM: removeItemView
 });
 
+const dragTranslation = (childIndex, dragIndex, itemMargin) => {
+  if (childIndex - 1 === dragIndex) {
+    return itemMargin / 6;
+  }
+
+  if (childIndex === dragIndex) {
+    return itemMargin / 2;
+  }
+
+  if (childIndex + 1 === dragIndex) {
+    return -itemMargin / 2;
+  }
+
+  if (childIndex + 2 === dragIndex) {
+    return -itemMargin / 6;
+  }
+
+  return 0;
+};
+
 /**
  * Write to view
  * @param root
  * @param actions
  * @param props
  */
-const write$2 = ({ root, props, actions, shouldOptimize }) => {
+const write$2 = ({ root, props, actions }) => {
   // route actions
   route$2({ root, props, actions });
 
-  const { dragCoordinates } = props;
+  let resting = true;
 
-  // get index
-  const dragIndex = dragCoordinates
-    ? getItemIndexByPosition(root, dragCoordinates)
-    : null;
+  // update item positions
+  let offset = 0;
+  root.childViews
+    .filter(child => child.rect.outer.height)
+    .forEach((child, childIndex) => {
+      const childRect = child.rect;
 
-  // available space on horizontal axis
-  const horizontalSpace = root.rect.element.width;
+      // set this child offset
+      child.translateX = 0;
+      child.translateY =
+        offset +
+        (props.dragIndex > -1
+          ? dragTranslation(childIndex, props.dragIndex, 10)
+          : 0);
 
-  // only draw children that have dimensions
-  const visibleChildren = root.childViews.filter(
-    child => child.rect.outer.height
-  );
-
-  // sort based on current active items
-  const children = root
-    .query('GET_ACTIVE_ITEMS')
-    .map(item$$1 => visibleChildren.find(child => child.id === item$$1.id))
-    .filter(item$$1 => item$$1);
-
-  // add index is used to reserve the dropped/added item index till the actual item is rendered
-  const addIndex = root.ref.addIndex || null;
-
-  // add index no longer needed till possibly next draw
-  root.ref.addIndex = null;
-
-  let dragIndexOffset = 0;
-  let removeIndexOffset = 0;
-  let addIndexOffset = 0;
-
-  if (children.length === 0) return;
-
-  const childRect = children[0].rect.element;
-  const itemVerticalMargin = childRect.marginTop + childRect.marginBottom;
-  const itemHorizontalMargin = childRect.marginLeft + childRect.marginRight;
-  const itemWidth = childRect.width + itemHorizontalMargin;
-  const itemHeight = childRect.height + itemVerticalMargin;
-  const itemsPerRow = Math.round(horizontalSpace / itemWidth);
-
-  // stack
-  if (itemsPerRow === 1) {
-    let offsetY = 0;
-    let dragOffset = 0;
-
-    children.forEach((child, index) => {
-      if (dragIndex) {
-        let dist = index - dragIndex;
-        if (dist === -2) {
-          dragOffset = -itemVerticalMargin * 0.25;
-        } else if (dist === -1) {
-          dragOffset = -itemVerticalMargin * 0.75;
-        } else if (dist === 0) {
-          dragOffset = itemVerticalMargin * 0.75;
-        } else if (dist === 1) {
-          dragOffset = itemVerticalMargin * 0.25;
-        } else {
-          dragOffset = 0;
-        }
-      }
-
-      if (shouldOptimize) {
-        child.translateX = null;
-        child.translateY = null;
-      }
-
+      // show child if it's not marked for removal
       if (!child.markedForRemoval) {
-        moveItem(child, 0, offsetY + dragOffset);
+        child.scaleX = 1;
+        child.scaleY = 1;
+        child.opacity = 1;
       }
 
-      let itemHeight = child.rect.element.height + itemVerticalMargin;
-
-      let visualHeight =
-        itemHeight * (child.markedForRemoval ? child.opacity : 1);
-
-      offsetY += visualHeight;
+      // calculate next child offset (reduce height by y scale for views that are being removed)
+      offset += childRect.outer.height;
     });
-  } else {
-    // grid
-    let prevX = 0;
-    let prevY = 0;
 
-    children.forEach((child, index) => {
-      if (index === dragIndex) {
-        dragIndexOffset = 1;
-      }
-
-      if (index === addIndex) {
-        addIndexOffset += 1;
-      }
-
-      if (child.markedForRemoval && child.opacity < 0.5) {
-        removeIndexOffset -= 1;
-      }
-
-      const visualIndex =
-        index + addIndexOffset + dragIndexOffset + removeIndexOffset;
-
-      const indexX = visualIndex % itemsPerRow;
-      const indexY = Math.floor(visualIndex / itemsPerRow);
-
-      const offsetX = indexX * itemWidth;
-      const offsetY = indexY * itemHeight;
-
-      const vectorX = Math.sign(offsetX - prevX);
-      const vectorY = Math.sign(offsetY - prevY);
-
-      prevX = offsetX;
-      prevY = offsetY;
-
-      if (child.markedForRemoval) return;
-
-      if (shouldOptimize) {
-        child.translateX = null;
-        child.translateY = null;
-      }
-
-      moveItem(child, offsetX, offsetY, vectorX, vectorY);
+  // remove marked views
+  root.childViews
+    .filter(view => view.markedForRemoval && view.opacity === 0)
+    .forEach(view => {
+      root.removeChildView(view);
+      resting = false;
     });
-  }
+
+  return resting;
 };
 
 /**
@@ -5771,21 +4810,28 @@ const list = createView({
   write: write$2,
   tag: 'ul',
   name: 'list',
-  didWriteView: ({ root }) => {
-    root.childViews
-      .filter(
-        view => view.markedForRemoval && view.opacity === 0 && view.resting
-      )
-      .forEach(view => {
-        view._destroy();
-        root.removeChildView(view);
-      });
-  },
   filterFrameActionsForChild: filterSetItemActions,
   mixins: {
-    apis: ['dragCoordinates']
+    apis: ['dragIndex']
   }
 });
+
+const getItemIndexByPosition = (view, positionInView) => {
+  let i = 0;
+  const childViews = view.childViews;
+  const l = childViews.length;
+  for (; i < l; i++) {
+    const item = childViews[i];
+    const itemRect = item.rect.outer;
+    const itemRectMid = itemRect.top + itemRect.height * 0.5;
+
+    if (positionInView.top < itemRectMid) {
+      return i;
+    }
+  }
+
+  return l;
+};
 
 const create$2 = ({ root, props }) => {
   root.ref.list = root.appendChildView(root.createChildView(list));
@@ -5796,12 +4842,11 @@ const create$2 = ({ root, props }) => {
 
 const storeDragCoordinates = ({ root, props, action }) => {
   props.dragCoordinates = {
-    left: action.position.scopeLeft - root.ref.list.rect.element.left,
+    left: action.position.scopeLeft,
     top:
       action.position.scopeTop -
-      (root.rect.outer.top +
-        root.rect.element.marginTop +
-        root.rect.element.scrollTop)
+      root.rect.outer.top +
+      root.rect.element.scrollTop
   };
 };
 
@@ -5819,7 +4864,9 @@ const write$1 = ({ root, props, actions }) => {
   route$1({ root, props, actions });
 
   // current drag position
-  root.ref.list.dragCoordinates = props.dragCoordinates;
+  root.ref.list.dragIndex = props.dragCoordinates
+    ? getItemIndexByPosition(root.ref.list, props.dragCoordinates)
+    : -1;
 
   // if currently overflowing but no longer received overflow
   if (props.overflowing && !props.overflow) {
@@ -5831,13 +4878,10 @@ const write$1 = ({ root, props, actions }) => {
   }
 
   // if is not overflowing currently but does receive overflow value
-  if (props.overflow) {
-    const newHeight = Math.round(props.overflow);
-    if (newHeight !== root.height) {
-      props.overflowing = true;
-      root.element.dataset.state = 'overflow';
-      root.height = newHeight;
-    }
+  if (!props.overflowing && props.overflow) {
+    props.overflowing = true;
+    root.element.dataset.state = 'overflow';
+    root.height = props.overflow - root.translateY;
   }
 };
 
@@ -5846,11 +4890,8 @@ const listScroller = createView({
   write: write$1,
   name: 'list-scroller',
   mixins: {
-    apis: ['overflow', 'dragCoordinates'],
-    styles: ['height', 'translateY'],
-    animations: {
-      translateY: 'spring'
-    }
+    apis: ['overflow'],
+    styles: ['height', 'translateY']
   }
 });
 
@@ -5902,7 +4943,7 @@ const create$12 = ({ root, props }) => {
   attr(root.element, 'aria-labelledby', `filepond--drop-label-${props.id}`);
 
   // handle changes to the input field
-  root.ref.handleChange = e => {
+  root.element.addEventListener('change', () => {
     if (!root.element.value) {
       return;
     }
@@ -5918,8 +4959,7 @@ const create$12 = ({ root, props }) => {
       // reset input, it's just for exposing a method to drop files, should not retain any state
       resetFileInput(root.element);
     }, 250);
-  };
-  root.element.addEventListener('change', root.ref.handleChange);
+  });
 };
 
 const setAcceptedFileTypes = ({ root, action }) => {
@@ -5962,43 +5002,23 @@ const updateRequiredStatus = ({ root, props }) => {
   // always remove the required attribute when more than zero items
   if (root.query('GET_TOTAL_ITEMS') > 0) {
     attrToggle(root.element, 'required', false);
-  } else {
-    // remove any validation messages
-    const shouldCheckValidity = root.query('GET_CHECK_VALIDITY');
-    if (shouldCheckValidity) {
-      root.element.setCustomValidity('');
-    }
-
-    // we only add required if the field has been deemed required
-    if (root.query('GET_REQUIRED')) {
-      attrToggle(root.element, 'required', true);
-    }
+  } else if (root.query('GET_REQUIRED')) {
+    // if zero items, we only add it if the field is required
+    attrToggle(root.element, 'required', true);
   }
-};
-
-const updateFieldValidityStatus = ({ root }) => {
-  const shouldCheckValidity = root.query('GET_CHECK_VALIDITY');
-  if (!shouldCheckValidity) return;
-  root.element.setCustomValidity(root.query('GET_LABEL_INVALID_FIELD'));
 };
 
 const browser = createView({
   tag: 'input',
   name: 'browser',
   ignoreRect: true,
-  ignoreRectUpdate: true,
   attributes: {
     type: 'file'
   },
   create: create$12,
-  destroy: ({ root }) => {
-    root.element.removeEventListener('change', root.ref.handleChange);
-  },
   write: createRoute({
-    DID_LOAD_ITEM: updateRequiredStatus,
-    DID_THROW_ITEM_INVALID: updateFieldValidityStatus,
+    DID_ADD_ITEM: updateRequiredStatus,
     DID_REMOVE_ITEM: updateRequiredStatus,
-
     DID_SET_ALLOW_BROWSE: toggleAllowBrowse$1,
     DID_SET_ALLOW_MULTIPLE: toggleAllowMultiple,
     DID_SET_ACCEPTED_FILE_TYPES: setAcceptedFileTypes,
@@ -6034,9 +5054,6 @@ const create$13 = ({ root, props }) => {
     }
   });
 
-  // update
-  updateLabelValue(label, props.caption);
-
   // add!
   root.appendChild(label);
   root.ref.label = label;
@@ -6053,14 +5070,14 @@ const updateLabelValue = (label, value) => {
 
 const dropLabel = createView({
   name: 'drop-label',
-  ignoreRect: true,
   create: create$13,
   write: createRoute({
-    DID_SET_LABEL_IDLE: ({ root, action }) => {
-      updateLabelValue(root.ref.label, action.value);
+    DID_SET_LABEL_IDLE: ({ root, action, props }) => {
+      props.caption = updateLabelValue(root.ref.label, action.value);
     }
   }),
   mixins: {
+    apis: ['caption'],
     styles: ['opacity', 'translateX', 'translateY'],
     animations: {
       opacity: { type: 'tween', duration: 150 },
@@ -6130,7 +5147,7 @@ const explodeBlob = ({ root }) => {
 };
 
 const write$8 = ({ root, props, actions }) => {
-  route$5({ root, props, actions });
+  route$4({ root, props, actions });
 
   const { blob: blob$$1 } = root.ref;
 
@@ -6140,7 +5157,7 @@ const write$8 = ({ root, props, actions }) => {
   }
 };
 
-const route$5 = createRoute({
+const route$4 = createRoute({
   DID_DRAG: moveBlob,
   DID_DROP: explodeBlob,
   DID_END_DRAG: hideBlob
@@ -6148,36 +5165,12 @@ const route$5 = createRoute({
 
 const drip = createView({
   ignoreRect: true,
-  ignoreRectUpdate: true,
   name: 'drip',
   write: write$8
 });
 
 const getRootNode = element =>
   'getRootNode' in element ? element.getRootNode() : document;
-
-const images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff'];
-const text$1 = ['css', 'csv', 'html', 'txt'];
-const map = {
-  zip: 'zip|compressed',
-  epub: 'application/epub+zip'
-};
-
-const guesstimateMimeType = (extension = '') => {
-  extension = extension.toLowerCase();
-  if (images.includes(extension)) {
-    return (
-      'image/' +
-      (extension === 'jpg'
-        ? 'jpeg'
-        : extension === 'svg' ? 'svg+xml' : extension)
-    );
-  }
-  if (text$1.includes(extension)) {
-    return 'text/' + extension;
-  }
-  return map[extension] || null;
-};
 
 const requestDataTransferItems = dataTransfer =>
   new Promise((resolve, reject) => {
@@ -6267,7 +5260,7 @@ const getFilesInDirectory = entry =>
             // read as file
             totalFilesFound++;
             entry.file(file => {
-              files.push(correctMissingFileType(file));
+              files.push(file);
 
               if (totalFilesFound === files.length) {
                 resolve(files);
@@ -6281,20 +5274,6 @@ const getFilesInDirectory = entry =>
     // go!
     readEntries(entry);
   });
-
-const correctMissingFileType = file => {
-  if (file.type.length) return file;
-  const date = file.lastModifiedDate;
-  const name = file.name;
-  file = file.slice(
-    0,
-    file.size,
-    guesstimateMimeType(getExtensionFromFilename(file.name))
-  );
-  file.name = name;
-  file.lastModifiedDate = date;
-  return file;
-};
 
 const isDirectoryEntry = item =>
   isEntry(item) && (getAsEntry(item) || {}).isDirectory;
@@ -6342,12 +5321,14 @@ const getLinksFromTransferMetaData = dataTransfer => {
 
 const dragNDropObservers = [];
 
-const eventPosition = e => ({
-  pageLeft: e.pageX,
-  pageTop: e.pageY,
-  scopeLeft: e.offsetX || e.layerX,
-  scopeTop: e.offsetY || e.layerY
-});
+const eventPosition = e => {
+  return {
+    pageLeft: e.pageX,
+    pageTop: e.pageY,
+    scopeLeft: e.layerX || e.offsetX,
+    scopeTop: e.layerY || e.offsetY
+  };
+};
 
 const createDragNDropClient = (element, scopeToObserve, filterElement) => {
   const observer = getDragNDropObserver(scopeToObserve);
@@ -6425,23 +5406,15 @@ const createDragNDropObserver = element => {
   return observer;
 };
 
-const elementFromPoint = (root, point) => {
-  if (!('elementFromPoint' in root)) {
-    root = document;
-  }
-  return root.elementFromPoint(point.x, point.y);
-};
-
 const isEventTarget = (e, target) => {
   // get root
   const root = getRootNode(target);
 
   // get element at position
-  // if root is not actual shadow DOM and does not have elementFromPoint method, use the one on document
-  const elementAtPosition = elementFromPoint(root, {
-    x: e.pageX - window.pageXOffset,
-    y: e.pageY - window.pageYOffset
-  });
+  const elementAtPosition = root.elementFromPoint(
+    e.pageX - window.pageXOffset,
+    e.pageY - window.pageYOffset
+  );
 
   // test if target is the element or if one of its children is
   return elementAtPosition === target || target.contains(elementAtPosition);
@@ -6545,7 +5518,6 @@ const drop = (root, clients) => e => {
   e.preventDefault();
 
   const dataTransfer = e.dataTransfer;
-
   requestDataTransferItems(dataTransfer).then(items => {
     clients.forEach(client => {
       const { filterElement, element, ondrop, onexit, allowdrop } = client;
@@ -6716,6 +5688,34 @@ const createPaster = () => {
   return api;
 };
 
+const debounce = (func, interval = 16, immidiateOnly = true) => {
+  let last = Date.now();
+  let timeout = null;
+
+  return (...args) => {
+    clearTimeout(timeout);
+
+    const dist = Date.now() - last;
+
+    const fn = () => {
+      last = Date.now();
+      func(...args);
+    };
+
+    if (dist < interval) {
+      // we need to delay by the difference between interval and dist
+      // for example: if distance is 10 ms and interval is 16 ms,
+      // we need to wait an additional 6ms before calling the function)
+      if (!immidiateOnly) {
+        timeout = setTimeout(fn, interval - dist);
+      }
+    } else {
+      // go!
+      fn();
+    }
+  };
+};
+
 /**
  * Creates the file view
  */
@@ -6819,7 +5819,6 @@ const itemError = ({ root, action }) => {
 const assistant = createView({
   create: create$14,
   ignoreRect: true,
-  ignoreRectUpdate: true,
   write: createRoute({
     DID_LOAD_ITEM: itemAdded,
     DID_REMOVE_ITEM: itemRemoved,
@@ -6828,7 +5827,6 @@ const assistant = createView({
     DID_ABORT_ITEM_PROCESSING: itemProcessedUndo,
     DID_REVERT_ITEM_PROCESSING: itemProcessedUndo,
 
-    DID_THROW_ITEM_REMOVE_ERROR: itemError,
     DID_THROW_ITEM_LOAD_ERROR: itemError,
     DID_THROW_ITEM_INVALID: itemError,
     DID_THROW_ITEM_PROCESSING_ERROR: itemError
@@ -6836,41 +5834,6 @@ const assistant = createView({
   tag: 'span',
   name: 'assistant'
 });
-
-const toCamels = (string, separator = '-') =>
-  string.replace(new RegExp(`${separator}.`, 'g'), sub =>
-    sub.charAt(1).toUpperCase()
-  );
-
-const debounce = (func, interval = 16, immidiateOnly = true) => {
-  let last = Date.now();
-  let timeout = null;
-
-  return (...args) => {
-    clearTimeout(timeout);
-
-    const dist = Date.now() - last;
-
-    const fn = () => {
-      last = Date.now();
-      func(...args);
-    };
-
-    if (dist < interval) {
-      // we need to delay by the difference between interval and dist
-      // for example: if distance is 10 ms and interval is 16 ms,
-      // we need to wait an additional 6ms before calling the function)
-      if (!immidiateOnly) {
-        timeout = setTimeout(fn, interval - dist);
-      }
-    } else {
-      // go!
-      fn();
-    }
-  };
-};
-
-const MAX_FILES_LIMIT = 1000000;
 
 const create$1 = ({ root, props }) => {
   // Add id
@@ -6891,10 +5854,7 @@ const create$1 = ({ root, props }) => {
   root.ref.label = root.appendChildView(
     root.createChildView(
       dropLabel,
-      Object.assign({}, props, {
-        translateY: null,
-        caption: root.query('GET_LABEL_IDLE')
-      })
+      babelHelpers.extends({}, props, { translateY: null })
     )
   );
 
@@ -6910,7 +5870,7 @@ const create$1 = ({ root, props }) => {
 
   // Assistant notifies assistive tech when content changes
   root.ref.assistant = root.appendChildView(
-    root.createChildView(assistant, Object.assign({}, props))
+    root.createChildView(assistant, babelHelpers.extends({}, props))
   );
 
   // Measure (tests if fixed height was set)
@@ -6918,78 +5878,39 @@ const create$1 = ({ root, props }) => {
   root.ref.measure = createElement$1('div');
   root.ref.measure.style.height = '100%';
   root.element.appendChild(root.ref.measure);
-
-  // information on the root height or fixed height status
-  root.ref.bounds = null;
-
-  // apply initial style properties
-  root
-    .query('GET_STYLES')
-    .filter(style => !isEmpty(style.value))
-    .map(({ name, value }) => {
-      root.element.dataset[name] = value;
-    });
-
-  // determine if width changed
-  root.ref.widthPrevious = null;
-  root.ref.widthUpdated = debounce(() => {
-    root.dispatch('DID_RESIZE_ROOT');
-  }, 250);
-
-  //
-  root.ref.updateHistory = [];
 };
 
 const write = ({ root, props, actions }) => {
-  if (root.rect.element.width !== root.ref.widthPrevious) {
-    root.ref.widthPrevious = root.rect.element.width;
-    root.ref.widthUpdated();
-  }
-
-  // get box bounds, we do this only once
-  let bounds = root.ref.bounds;
-  if (!bounds) {
-    bounds = root.ref.bounds = calculateRootBoundingBoxHeight(root);
-
-    // destroy measure element
-    root.element.removeChild(root.ref.measure);
-    root.ref.measure = null;
-  }
-
   // route actions
   route({ root, props, actions });
 
-  // apply style properties
-  actions
-    .filter(action => /^DID_SET_STYLE_/.test(action.type))
-    .filter(action => !isEmpty(action.data.value))
-    .map(({ type, data }) => {
-      const name = toCamels(type.substr(8).toLowerCase(), '_');
-      root.element.dataset[name] = data.value;
-      root.invalidateLayout();
-    });
-
   // get quick references to various high level parts of the upload tool
-  const { hopper, label, list, panel: panel$$1 } = root.ref;
-
-  // sets correct state to hopper scope
-  if (hopper) {
-    hopper.updateHopperState();
-  }
+  const {
+    hopper,
+    label,
+    list,
+    panel: panel$$1,
+    browser: browser$$1
+  } = root.ref;
 
   // bool to indicate if we're full or not
-  const aspectRatio = root.query('GET_PANEL_ASPECT_RATIO');
   const isMultiItem = root.query('GET_ALLOW_MULTIPLE');
   const totalItems = root.query('GET_TOTAL_ITEMS');
-  const maxItems = isMultiItem
-    ? root.query('GET_MAX_FILES') || MAX_FILES_LIMIT
-    : 1;
-  const atMaxCapacity = totalItems === maxItems;
+  const maxItems = root.query('GET_MAX_FILES');
+  const atMaxCapacity = isMultiItem
+    ? totalItems === maxItems
+    : totalItems === 1;
+
+  // views not used in height calculation
+  const childrenUsedForBoundingCalculation = [...list.childViews[0].childViews];
+
+  // views used to calculate the visual height of the container (which is passed to panel)
+  const childrenUsedForVisualHeightCalculation = [list];
 
   // action used to add item
   const addAction = actions.find(action => action.type === 'DID_ADD_ITEM');
 
-  // if reached max capacity and we've just reached it
+  // if at max capacity hide the label
   if (atMaxCapacity && addAction) {
     // get interaction type
     const interactionMethod = addAction.data.interactionMethod;
@@ -6997,298 +5918,192 @@ const write = ({ root, props, actions }) => {
     // hide label
     label.opacity = 0;
 
+    // if is multi-item, the label is always moved upwards
     if (isMultiItem) {
-      label.translateY = -40;
+      label.translateY = -label.rect.element.height;
     } else {
+      // based on interaction method we move label in different directions
       if (interactionMethod === InteractionMethod.API) {
         label.translateX = 40;
       } else if (interactionMethod === InteractionMethod.BROWSE) {
         label.translateY = 40;
       } else {
-        label.translateY = 30;
+        label.translateY = -40;
       }
     }
   } else if (!atMaxCapacity) {
+    // reveal label
     label.opacity = 1;
+    label.translateY = root.rect.element.paddingTop;
     label.translateX = 0;
-    label.translateY = 0;
+
+    // we use label for bounding box
+    childrenUsedForVisualHeightCalculation.push(label);
+    childrenUsedForBoundingCalculation.push(label);
   }
 
-  const listItemMargin = calculateListItemMargin(root);
+  // sets correct state to hopper scope
+  if (hopper) {
+    hopper.updateHopperState();
+  }
 
-  const listHeight = calculateListHeight(root);
+  // need a label to do anything
+  if (!label.caption) {
+    return;
+  }
 
-  const labelHeight = label.rect.element.height;
-  const currentLabelHeight = !isMultiItem || atMaxCapacity ? 0 : labelHeight;
+  // link list to label bottom position (including bottom margin)
+  list.translateY = isMultiItem
+    ? label.rect.outer.bottom
+    : root.rect.element.paddingTop;
 
-  const listMarginTop = atMaxCapacity ? list.rect.element.marginTop : 0;
-  const listMarginBottom =
-    totalItems === 0 ? 0 : list.rect.element.marginBottom;
+  // update bounding box if has changed
+  const boxBounding = calculateRootBoundingBoxHeight(root, props);
+  const childrenBoundingHeight = calculateChildrenBoundingBoxHeight(
+    childrenUsedForBoundingCalculation
+  );
+  const visualHeight = calculateChildrenVisualHeight(
+    childrenUsedForVisualHeightCalculation
+  );
+  const bottomPadding = totalItems > 0 ? root.rect.element.paddingTop * 0.5 : 0;
 
-  const visualHeight =
-    currentLabelHeight + listMarginTop + listHeight.visual + listMarginBottom;
-  const boundsHeight =
-    currentLabelHeight + listMarginTop + listHeight.bounds + listMarginBottom;
-
-  // link list to label bottom position
-  list.translateY =
-    Math.max(0, currentLabelHeight - list.rect.element.marginTop) -
-    listItemMargin.top;
-
-  if (aspectRatio) {
-    // fixed aspect ratio
-
-    // calculate height based on width
-    const width = root.rect.element.width;
-    const height = width * aspectRatio;
-
-    // remember this width
-    const history = root.ref.updateHistory;
-    history.push(width);
-
-    const MAX_BOUNCES = 2;
-    if (history.length > MAX_BOUNCES * 2) {
-      const l = history.length;
-      const bottom = l - 10;
-      let bounces = 0;
-      for (let i = l; i >= bottom; i--) {
-        if (history[i] === history[i - 2]) {
-          bounces++;
-        }
-
-        if (bounces >= MAX_BOUNCES) {
-          // dont adjust height
-          return;
-        }
-      }
-    }
-
-    // fix height of panel so it adheres to aspect ratio
-    panel$$1.scalable = false;
-    panel$$1.height = height;
-
-    // available height for list
-    const listAvailableHeight =
-      // the height of the panel minus the label height
-      height -
-      currentLabelHeight -
-      // the room we leave open between the end of the list and the panel bottom
-      (listMarginBottom - listItemMargin.bottom) -
-      // if we're full we need to leave some room between the top of the panel and the list
-      (atMaxCapacity ? listMarginTop : 0);
-
-    if (listHeight.visual > listAvailableHeight) {
-      list.overflow = listAvailableHeight;
-    } else {
-      list.overflow = null;
-    }
-
-    // set container bounds (so pushes siblings downwards)
-    root.height = height;
-  } else if (bounds.fixedHeight) {
+  if (boxBounding.fixedHeight) {
     // fixed height
 
-    // fix height of panel
+    // fixed height panel
     panel$$1.scalable = false;
 
-    // available height for list
-    const listAvailableHeight =
-      // the height of the panel minus the label height
-      bounds.fixedHeight -
-      currentLabelHeight -
-      // the room we leave open between the end of the list and the panel bottom
-      (listMarginBottom - listItemMargin.bottom) -
-      // if we're full we need to leave some room between the top of the panel and the list
-      (atMaxCapacity ? listMarginTop : 0);
+    // link panel height to box bounding
+    panel$$1.height = boxBounding.fixedHeight + root.rect.element.paddingTop;
 
-    // set list height
-    if (listHeight.visual > listAvailableHeight) {
-      list.overflow = listAvailableHeight;
-    } else {
-      list.overflow = null;
-    }
-
-    // no need to set container bounds as these are handles by CSS fixed height
-  } else if (bounds.cappedHeight) {
+    // set overflow
+    list.overflow =
+      childrenBoundingHeight > panel$$1.height && isMultiItem
+        ? panel$$1.height
+        : null;
+  } else if (boxBounding.cappedHeight) {
     // max-height
 
     // not a fixed height panel
-    const isCappedHeight = visualHeight >= bounds.cappedHeight;
-    const panelHeight = Math.min(bounds.cappedHeight, visualHeight);
     panel$$1.scalable = true;
-    panel$$1.height = isCappedHeight
-      ? panelHeight
-      : panelHeight - listItemMargin.top - listItemMargin.bottom;
 
-    // available height for list
-    const listAvailableHeight =
-      // the height of the panel minus the label height
-      panelHeight -
-      currentLabelHeight -
-      // the room we leave open between the end of the list and the panel bottom
-      (listMarginBottom - listItemMargin.bottom) -
-      // if we're full we need to leave some room between the top of the panel and the list
-      (atMaxCapacity ? listMarginTop : 0);
-
-    // set list height (if is overflowing)
-    if (
-      visualHeight > bounds.cappedHeight &&
-      listHeight.visual > listAvailableHeight
-    ) {
-      list.overflow = listAvailableHeight;
-    } else {
-      list.overflow = null;
-    }
-
-    // set container bounds (so pushes siblings downwards)
-    root.height = Math.min(
-      bounds.cappedHeight,
-      boundsHeight - listItemMargin.top - listItemMargin.bottom
+    // limit children bounding height to the set capped height
+    const cappedChildrenBoundingHeight = Math.min(
+      boxBounding.cappedHeight,
+      childrenBoundingHeight
     );
+
+    // update root height
+    root.height = cappedChildrenBoundingHeight + bottomPadding;
+
+    // set visual height
+    panel$$1.height = Math.min(
+      boxBounding.cappedHeight + root.rect.element.paddingTop,
+      visualHeight + bottomPadding
+    );
+
+    // if can overflow, test if is currently overflowing
+    list.overflow =
+      childrenBoundingHeight > panel$$1.height && isMultiItem
+        ? panel$$1.height
+        : null;
   } else {
     // flexible height
 
     // not a fixed height panel
-    const itemMargin =
-      totalItems > 0 ? listItemMargin.top + listItemMargin.bottom : 0;
     panel$$1.scalable = true;
-    panel$$1.height = Math.max(labelHeight, visualHeight - itemMargin);
 
-    // set container bounds (so pushes siblings downwards)
-    root.height = Math.max(labelHeight, boundsHeight - itemMargin);
+    // set to new bounding
+    root.height =
+      childrenBoundingHeight + bottomPadding + root.rect.element.paddingTop;
+
+    // set height to new visual height
+    panel$$1.height = visualHeight + bottomPadding;
   }
 };
 
-const calculateListItemMargin = root => {
-  const item = root.ref.list.childViews[0].childViews[0];
-  return item
-    ? {
-        top: item.rect.element.marginTop,
-        bottom: item.rect.element.marginBottom
-      }
-    : {
-        top: 0,
-        bottom: 0
-      };
-};
+const calculateChildrenVisualHeight = children => {
+  return (
+    children
 
-const calculateListHeight = root => {
-  let visual = 0;
-  let bounds = 0;
+      // calculate the total height occupied by all children
+      .reduce((max, child) => {
+        const bottom = child.rect.outer.bottom;
 
-  // get file list reference
-  const scrollList = root.ref.list;
-  const itemList = scrollList.childViews[0];
-  const children = itemList.childViews;
+        if (bottom > max) {
+          max = bottom;
+        }
 
-  // no children, done!
-  if (children.length === 0) return { visual, bounds };
-
-  const horizontalSpace = itemList.rect.element.width;
-  const dragIndex = getItemIndexByPosition(
-    itemList,
-    scrollList.dragCoordinates
+        return max;
+      }, 0)
   );
-
-  const childRect = children[0].rect.element;
-
-  const itemVerticalMargin = childRect.marginTop + childRect.marginBottom;
-  const itemHorizontalMargin = childRect.marginLeft + childRect.marginRight;
-
-  const itemWidth = childRect.width + itemHorizontalMargin;
-  const itemHeight = childRect.height + itemVerticalMargin;
-
-  const newItem = typeof dragIndex !== 'undefined' && dragIndex >= 0 ? 1 : 0;
-  const removedItem = children.find(
-    child => child.markedForRemoval && child.opacity < 0.45
-  )
-    ? -1
-    : 0;
-  const verticalItemCount = children.length + newItem + removedItem;
-  const itemsPerRow = Math.round(horizontalSpace / itemWidth);
-
-  // stack
-  if (itemsPerRow === 1) {
-    children.forEach(item => {
-      const height = item.rect.element.height + itemVerticalMargin;
-      bounds += height;
-      visual += height * item.opacity;
-    });
-  } else {
-    // grid
-    bounds = Math.ceil(verticalItemCount / itemsPerRow) * itemHeight;
-    visual = bounds;
-  }
-
-  return { visual, bounds };
 };
 
-const calculateRootBoundingBoxHeight = root => {
+const calculateRootBoundingBoxHeight = (root, props) => {
+  // only calculate first time
+  if (props.boxBounding) {
+    return props.boxBounding;
+  }
+
   const height = root.ref.measureHeight || null;
   const cappedHeight = parseInt(root.style.maxHeight, 10) || null;
   const fixedHeight = height === 0 ? null : height;
 
-  return {
+  props.boxBounding = {
     cappedHeight,
     fixedHeight
   };
+
+  // destroy measure element
+  root.element.removeChild(root.ref.measure);
+  root.ref.measure = null;
+
+  // done!
+  return props.boxBounding;
 };
 
-const exceedsMaxFiles = (root, items) => {
-  const allowReplace = root.query('GET_ALLOW_REPLACE');
-  const allowMultiple = root.query('GET_ALLOW_MULTIPLE');
-  const totalItems = root.query('GET_TOTAL_ITEMS');
-  let maxItems = root.query('GET_MAX_FILES');
+const calculateChildrenBoundingBoxHeight = children => {
+  return (
+    children
 
-  // total amount of items being dragged
-  const totalBrowseItems = items.length;
-
-  // if does not allow multiple items and dragging more than one item
-  if (!allowMultiple && totalBrowseItems > 1) {
-    return true;
-  }
-
-  // limit max items to one if not allowed to drop multiple items
-  maxItems = allowMultiple ? maxItems : allowReplace ? maxItems : 1;
-
-  // no more room?
-  const hasMaxItems = isInt(maxItems);
-  if (hasMaxItems && totalItems + totalBrowseItems > maxItems) {
-    root.dispatch('DID_THROW_MAX_FILES', {
-      source: items,
-      error: createResponse('warning', 0, 'Max files')
-    });
-    return true;
-  }
-
-  return false;
+      // no use of outer and inner as that includes translations
+      .reduce((height, child) => {
+        return (
+          height + child.rect.inner.bottom + child.rect.element.marginBottom
+        );
+      }, 0)
+  );
 };
 
-const getDragIndex = (list, position) => {
-  const itemList = list.childViews[0];
-  return getItemIndexByPosition(itemList, {
-    left: position.scopeLeft - itemList.rect.element.left,
-    top:
-      position.scopeTop -
-      (list.rect.outer.top +
-        list.rect.element.marginTop +
-        list.rect.element.scrollTop)
-  });
-};
-
-/**
- * Enable or disable file drop functionality
- */
 const toggleAllowDrop = ({ root, props, action }) => {
   if (action.value && !root.ref.hopper) {
     const hopper = createHopper(
       root.element,
       items => {
-        // these files don't fit so stop here
-        if (exceedsMaxFiles(root, items)) return false;
+        const allowReplace = root.query('GET_ALLOW_REPLACE');
+        const allowMultiple = root.query('GET_ALLOW_MULTIPLE');
+        const totalItems = root.query('GET_TOTAL_ITEMS');
+        const dropValidation = root.query('GET_DROP_VALIDATION');
+        let maxItems = root.query('GET_MAX_TOTAL_ITEMS');
+
+        // total amount of items being dragged
+        const totalDragItems = items.length;
+
+        // if does not allow multiple items and dragging more than one item
+        if (!allowMultiple && totalDragItems > 1) {
+          return false;
+        }
+
+        // limit max items to one if not allowed to drop multiple items
+        maxItems = allowMultiple ? maxItems : allowReplace ? maxItems : 1;
+
+        // no more room?
+        const hasMaxItems = isInt(maxItems);
+        if (hasMaxItems && totalItems + totalDragItems > maxItems) {
+          return false;
+        }
 
         // all items should be validated by all filters as valid
-        const dropValidation = root.query('GET_DROP_VALIDATION');
         return dropValidation
           ? items.every(item =>
               applyFilters('ALLOW_HOPPER_ITEM', item, {
@@ -7304,10 +6119,21 @@ const toggleAllowDrop = ({ root, props, action }) => {
     );
 
     hopper.onload = (items, position) => {
-      root.dispatch('ADD_ITEMS', {
-        items,
-        index: getDragIndex(root.ref.list, position),
-        interactionMethod: InteractionMethod.DROP
+      const itemList = root.ref.list.childViews[0];
+      const index = getItemIndexByPosition(itemList, {
+        left: position.scopeLeft,
+        top:
+          position.scopeTop -
+          root.ref.list.rect.outer.top +
+          root.ref.list.element.scrollTop
+      });
+
+      forEachDelayed(items, source => {
+        root.dispatch('ADD_ITEM', {
+          interactionMethod: InteractionMethod.DROP,
+          source,
+          index
+        });
       });
 
       root.dispatch('DID_DROP', { position });
@@ -7345,16 +6171,14 @@ const toggleAllowBrowse = ({ root, props, action }) => {
     root.ref.browser = root.appendChildView(
       root.createChildView(
         browser,
-        Object.assign({}, props, {
+        babelHelpers.extends({}, props, {
           onload: items => {
-            // these files don't fit so stop here
-            if (exceedsMaxFiles(root, items)) return false;
-
-            // add items!
-            root.dispatch('ADD_ITEMS', {
-              items,
-              index: -1,
-              interactionMethod: InteractionMethod.BROWSE
+            forEachDelayed(items, source => {
+              root.dispatch('ADD_ITEM', {
+                interactionMethod: InteractionMethod.BROWSE,
+                source,
+                index: 0
+              });
             });
           }
         })
@@ -7373,10 +6197,12 @@ const toggleAllowPaste = ({ root, action }) => {
   if (action.value) {
     root.ref.paster = createPaster();
     root.ref.paster.onload = items => {
-      root.dispatch('ADD_ITEMS', {
-        items,
-        index: getDragIndex(root.ref.list, position),
-        interactionMethod: InteractionMethod.PASTE
+      forEachDelayed(items, source => {
+        root.dispatch('ADD_ITEM', {
+          interactionMethod: InteractionMethod.PASTE,
+          source,
+          index: 0
+        });
       });
     };
   } else if (root.ref.paster) {
@@ -7441,22 +6267,6 @@ const createApp$1 = (initialOptions = {}) => {
   // set initial options
   store.dispatch('SET_OPTIONS', { options: initialOptions });
 
-  // re-render on window resize start and finish
-  let resizing = false;
-  let timer = null;
-  const resizeHandler = () => {
-    if (!resizing) {
-      resizing = true;
-      store.dispatch('DID_START_RESIZE');
-    }
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      resizing = false;
-      store.dispatch('DID_STOP_RESIZE');
-    }, 500);
-  };
-  window.addEventListener('resize', resizeHandler);
-
   // render initial view
   const view = root(store, { id: getUniqueId() });
 
@@ -7465,7 +6275,6 @@ const createApp$1 = (initialOptions = {}) => {
   //
   let resting = false;
   let hidden = false;
-
   const readWriteApi = {
     // necessary for update loop
 
@@ -7500,7 +6309,7 @@ const createApp$1 = (initialOptions = {}) => {
       const actions$$1 = store
         .processActionQueue()
 
-        // filter out set actions (these will automatically trigger DID_SET)
+        // filter out set actions (will trigger DID_SET)
         .filter(action => !/^SET_/.test(action.type));
 
       // if was idling and no actions stop here
@@ -7512,10 +6321,7 @@ const createApp$1 = (initialOptions = {}) => {
       routeActionsToEvents(actions$$1);
 
       // update the view
-      resting = view._write(ts, actions$$1, resizing);
-
-      // will clean up all archived items
-      removeReleasedItems(store.query('GET_ITEMS'));
+      resting = view._write(ts, actions$$1);
 
       // now idling
       if (resting) {
@@ -7540,15 +6346,11 @@ const createApp$1 = (initialOptions = {}) => {
 
     // copy relevant props
     if (data.hasOwnProperty('error')) {
-      event.error = data.error ? Object.assign({}, data.error) : null;
+      event.error = data.error ? babelHelpers.extends({}, data.error) : null;
     }
 
     if (data.status) {
-      event.status = Object.assign({}, data.status);
-    }
-
-    if (data.file) {
-      event.output = data.file;
+      event.status = babelHelpers.extends({}, data.status);
     }
 
     // only source is available, else add item if possible
@@ -7557,11 +6359,6 @@ const createApp$1 = (initialOptions = {}) => {
     } else if (data.item || data.id) {
       const item = data.item ? data.item : store.query('GET_ITEM', data.id);
       event.file = item ? createItemAPI(item) : null;
-    }
-
-    // map all items in a possible items array
-    if (data.items) {
-      event.items = data.items.map(createItemAPI);
     }
 
     // if this is a progress event add the progress amount
@@ -7587,8 +6384,6 @@ const createApp$1 = (initialOptions = {}) => {
 
     DID_THROW_ITEM_LOAD_ERROR: [createEvent('error'), createEvent('addfile')],
 
-    DID_PREPARE_OUTPUT: createEvent('preparefile'),
-
     DID_START_ITEM_PROCESSING: createEvent('processfilestart'),
     DID_UPDATE_ITEM_PROCESS_PROGRESS: createEvent('processfileprogress'),
     DID_ABORT_ITEM_PROCESSING: createEvent('processfileabort'),
@@ -7600,14 +6395,12 @@ const createApp$1 = (initialOptions = {}) => {
       createEvent('processfile')
     ],
 
-    DID_REMOVE_ITEM: createEvent('removefile'),
-
-    DID_UPDATE_ITEMS: createEvent('updatefiles')
+    SPLICE_ITEM: createEvent('removefile')
   };
 
   const exposeEvent = event => {
     // create event object to be dispatched
-    const detail = Object.assign({ pond: exports }, event);
+    const detail = babelHelpers.extends({ pond: exports }, event);
     delete detail.type;
     view.element.dispatchEvent(
       new CustomEvent(`FilePond:${event.type}`, {
@@ -7633,7 +6426,7 @@ const createApp$1 = (initialOptions = {}) => {
       params.push(event.file);
     }
 
-    // append other props
+    // append otherp props
     const filtered = ['type', 'error', 'file'];
     Object.keys(event)
       .filter(key => !filtered.includes(key))
@@ -7672,7 +6465,7 @@ const createApp$1 = (initialOptions = {}) => {
   //
   const setOptions = options => store.dispatch('SET_OPTIONS', { options });
 
-  const getFile = query => store.query('GET_ACTIVE_ITEM', query);
+  const getFile = query => store.query('GET_ITEM', query);
 
   const addFile = (source, options = {}) =>
     new Promise((resolve, reject) => {
@@ -7681,8 +6474,7 @@ const createApp$1 = (initialOptions = {}) => {
         source,
         index: options.index,
         success: resolve,
-        failure: reject,
-        options
+        failure: reject
       });
     });
 
@@ -7691,7 +6483,7 @@ const createApp$1 = (initialOptions = {}) => {
     store.dispatch('REMOVE_ITEM', { query });
 
     // see if item has been removed
-    return store.query('GET_ACTIVE_ITEM', query) === null;
+    return store.query('GET_ITEM', query) === null;
   };
 
   const addFiles = (...args) =>
@@ -7717,40 +6509,33 @@ const createApp$1 = (initialOptions = {}) => {
         sources.push(...args);
       }
 
-      store.dispatch('ADD_ITEMS', {
-        items: sources,
-        index: options.index,
-        interactionMethod: InteractionMethod.API,
-        success: resolve,
-        failure: reject
+      const sourcePromises = [];
+      const delayPromises = forEachDelayed(sources, source => {
+        sourcePromises.push(addFile(source, options));
+      });
+
+      Promise.all(delayPromises).then(() => {
+        Promise.all(sourcePromises).then(results => {
+          resolve(results);
+        });
       });
     });
 
-  const getFiles = () => store.query('GET_ACTIVE_ITEMS');
+  const getFiles = () => store.query('GET_ITEMS');
 
   const processFile = query =>
     new Promise((resolve, reject) => {
-      store.dispatch('REQUEST_ITEM_PROCESSING', {
+      store.dispatch('PROCESS_ITEM', {
         query,
-        success: item => {
-          resolve(item);
-        },
-        failure: error => {
-          reject(error);
-        }
+        success: resolve,
+        failure: reject
       });
     });
 
   const processFiles = (...args) => {
     const queries$$1 = Array.isArray(args[0]) ? args[0] : args;
     if (!queries$$1.length) {
-      const files = getFiles().filter(
-        item =>
-          item.status !== ItemStatus.PROCESSING &&
-          item.status !== ItemStatus.PROCESSING_COMPLETE &&
-          item.status !== ItemStatus.PROCESSING_REVERT_ERROR
-      );
-      return Promise.all(files.map(processFile));
+      return Promise.all(getFiles().map(processFile));
     }
     return Promise.all(queries$$1.map(processFile));
   };
@@ -7774,7 +6559,7 @@ const createApp$1 = (initialOptions = {}) => {
     return mappedQueries.map(removeFile);
   };
 
-  const exports = Object.assign(
+  const exports = babelHelpers.extends(
     {},
     on(),
     readWriteApi,
@@ -7834,11 +6619,6 @@ const createApp$1 = (initialOptions = {}) => {
       removeFiles,
 
       /**
-       * Sort list of files
-       */
-      sort: compare => store.dispatch('SORT', { compare }),
-
-      /**
        * Browse the file system for a file
        */
       browse: () => {
@@ -7862,9 +6642,6 @@ const createApp$1 = (initialOptions = {}) => {
 
         // destroy view
         view._destroy();
-
-        // stop listening to resize
-        window.removeEventListener('resize', resizeHandler);
 
         // dispatch destroy
         store.dispatch('DID_DESTROY');
@@ -7948,11 +6725,18 @@ const createAppObject = (customOptions = {}) => {
   });
 
   // set app options
-  const app = createApp$1(Object.assign({}, defaultOptions$$1, customOptions));
+  const app = createApp$1(
+    babelHelpers.extends({}, defaultOptions$$1, customOptions)
+  );
 
   // return the plugin instance
   return app;
 };
+
+const toCamels = (string, separator = '-') =>
+  string.replace(new RegExp(`${separator}.`, 'g'), sub =>
+    sub.charAt(1).toUpperCase()
+  );
 
 const lowerCaseFirstLetter = string =>
   string.charAt(0).toLowerCase() + string.slice(1);
@@ -8009,20 +6793,13 @@ const mapObject = (object, propertyMap) => {
 
 const getAttributesAsObject = (node, attributeMapping = {}) => {
   // turn attributes into object
-  const attributes = [];
-  forin(node.attributes, index => {
-    attributes.push(node.attributes[index]);
-  });
-
-  const output = attributes
-    .filter(attribute => attribute.name)
-    .reduce((obj, attribute) => {
-      const value = attr(node, attribute.name);
-
-      obj[attributeNameToPropertyName(attribute.name)] =
-        value === attribute.name ? true : value;
-      return obj;
-    }, {});
+  const output = [...node.attributes].reduce((obj, attribute) => {
+    obj[attributeNameToPropertyName(attribute.name)] = attr(
+      node,
+      attribute.name
+    );
+    return obj;
+  }, {});
 
   // do mapping of object properties
   mapObject(output, attributeMapping);
@@ -8068,27 +6845,18 @@ const createAppAtElement = (element, options = {}) => {
   // add additional option translators
   applyFilters('SET_ATTRIBUTE_TO_OPTION_MAP', attributeMapping);
 
-  // create final options object by setting options object and then overriding options supplied on element
-  const mergedOptions = Object.assign({}, options);
-
-  const attributeOptions = getAttributesAsObject(
-    element.nodeName === 'FIELDSET'
-      ? element.querySelector('input[type=file]')
-      : element,
-    attributeMapping
+  // create final options object by extracting options from element
+  // and then overriding with options object
+  const mergedOptions = babelHelpers.extends(
+    {},
+    getAttributesAsObject(
+      element.nodeName === 'FIELDSET'
+        ? element.querySelector('input[type=file]')
+        : element,
+      attributeMapping
+    ),
+    options
   );
-
-  // merge with options object
-  Object.keys(attributeOptions).forEach(key => {
-    if (isObject(attributeOptions[key])) {
-      if (!isObject(mergedOptions[key])) {
-        mergedOptions[key] = {};
-      }
-      Object.assign(mergedOptions[key], attributeOptions[key]);
-    } else {
-      mergedOptions[key] = attributeOptions[key];
-    }
-  });
 
   // if parent is a fieldset, get files from parent by selecting all input fields that are not file upload fields
   // these will then be automatically set to the initial files
@@ -8121,12 +6889,12 @@ const createAppAtElement = (element, options = {}) => {
 // if an element is passed, we create the instance at that element, if not, we just create an up object
 const createApp = (...args) => createAppAtElement(...args);
 
-const PRIVATE_METHODS = ['fire', '_read', '_write'];
+const PRIVATE_METHODS$1 = ['fire', '_read', '_write'];
 
 const createAppAPI = app => {
   const api = {};
 
-  copyObjectPropertiesToObject(app, api, PRIVATE_METHODS);
+  copyObjectPropertiesToObject(app, api, PRIVATE_METHODS$1);
 
   return api;
 };
@@ -8138,6 +6906,29 @@ const createAppAPI = app => {
  */
 const replaceInString = (string, replacements) =>
   string.replace(/(?:{([a-zA-Z]+)})/g, (match, group) => replacements[group]);
+
+const images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff'];
+const text$1 = ['css', 'csv', 'html', 'txt'];
+const map = {
+  zip: 'zip|compressed',
+  epub: 'application/epub+zip'
+};
+
+const guesstimateMimeType = (extension = '') => {
+  extension = extension.toLowerCase();
+  if (images.includes(extension)) {
+    return (
+      'image/' +
+      (extension === 'jpg'
+        ? 'jpeg'
+        : extension === 'svg' ? 'svg+xml' : extension)
+    );
+  }
+  if (text$1.includes(extension)) {
+    return 'text/' + extension;
+  }
+  return map[extension] || null;
+};
 
 const createWorker = fn => {
   const workerBlob = new Blob(['(', fn.toString(), ')()'], {
@@ -8172,7 +6963,7 @@ const createWorker = fn => {
   };
 };
 
-const loadImage = url =>
+const loadImage = (url, cb) =>
   new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -8184,15 +6975,12 @@ const loadImage = url =>
     img.src = url;
   });
 
-const renameFile = (file, name) => {
-  const renamedFile = file.slice(0, file.size, file.type);
-  renamedFile.lastModifiedDate = file.lastModifiedDate;
-  renamedFile.name = name;
-  return renamedFile;
-};
-
 const copyFile = file => renameFile(file, file.name);
 
+const isFile = value =>
+  value instanceof File || (value instanceof Blob && value.name);
+
+// utilities exposed to plugins
 // already registered plugins (can't register twice)
 const registeredPlugins = [];
 
@@ -8224,52 +7012,16 @@ const createAppPlugin = plugin => {
       createRoute,
       createWorker,
       createView,
-      createItemAPI,
       loadImage,
       copyFile,
       renameFile,
-      createBlob,
-      applyFilterChain,
-      text,
-      getNumericAspectRatioFromString
-    },
-    views: {
-      fileActionButton
+      applyFilterChain
     }
   });
 
   // add plugin options to default options
   extendDefaultOptions(pluginOutline.options);
 };
-
-// feature detection used by supported() method
-const isOperaMini = () =>
-  Object.prototype.toString.call(window.operamini) === '[object OperaMini]';
-const hasPromises = () => 'Promise' in window;
-const hasBlobSlice = () => 'slice' in Blob.prototype;
-const hasCreateObjectURL = () =>
-  'URL' in window && 'createObjectURL' in window.URL;
-const hasVisibility = () => 'visibilityState' in document;
-const hasTiming = () => 'performance' in window; // iOS 8.x
-const isBrowser = () =>
-  typeof window !== 'undefined' && typeof window.document !== 'undefined';
-
-const supported = (() => {
-  // Runs immidiately and then remembers result for subsequent calls
-  const isSupported =
-    // Has to be a browser
-    isBrowser() &&
-    // Can't run on Opera Mini due to lack of everything
-    !isOperaMini() &&
-    // Require these APIs to feature detect a modern browser
-    hasVisibility() &&
-    hasPromises() &&
-    hasBlobSlice() &&
-    hasCreateObjectURL() &&
-    hasTiming();
-
-  return () => isSupported;
-})();
 
 /**
  * Plugin internal state (over all instances)
@@ -8282,33 +7034,16 @@ const state = {
 // plugin name
 const name = 'filepond';
 
-/**
- * Public Plugin methods
- */
-const fn = () => {};
-let FileStatus = {};
-let OptionTypes = {};
-let create = fn;
-let destroy = fn;
-let parse = fn;
-let find = fn;
-let registerPlugin = fn;
-let getOptions = fn;
-let setOptions = fn;
-let FileOrigin = {};
+// is in browser
+const hasNavigator = typeof navigator !== 'undefined';
 
-// if not supported, no API
-if (supported()) {
-  // start painter and fire load event
-  createPainter(
-    () => {
-      state.apps.forEach(app => app._read());
-    },
-    ts => {
-      state.apps.forEach(app => app._write(ts));
-    }
-  );
+// app painter, cannot be paused or stopped at the moment
+const painter =
+  hasNavigator &&
+  createPainter(createUpdater(state.apps, '_read', '_write'), 60);
 
+// fire load event
+if (hasNavigator) {
   // fire loaded event so we know when FilePond is available
   const dispatch = () => {
     // let others know we have area ready
@@ -8321,7 +7056,7 @@ if (supported()) {
           parse,
           find,
           registerPlugin,
-          setOptions
+          setOptions: setOptions$$1
         }
       })
     );
@@ -8336,110 +7071,136 @@ if (supported()) {
   } else {
     document.addEventListener('DOMContentLoaded', dispatch);
   }
-
-  // updates the OptionTypes object based on the current options
-  const updateOptionTypes = () =>
-    forin(getOptions$1(), (key, value) => {
-      OptionTypes[key] = value[1];
-    });
-
-  FileOrigin = Object.assign({}, FileOrigin$1);
-  FileStatus = Object.assign({}, ItemStatus$1);
-
-  OptionTypes = {};
-  updateOptionTypes();
-
-  // create method, creates apps and adds them to the app array
-  create = (...args) => {
-    const app = createApp(...args);
-    app.on('destroy', destroy);
-    state.apps.push(app);
-    return createAppAPI(app);
-  };
-
-  // destroys apps and removes them from the app array
-  destroy = hook => {
-    // returns true if the app was destroyed successfully
-    const indexToRemove = state.apps.findIndex(app => app.isAttachedTo(hook));
-    if (indexToRemove >= 0) {
-      // remove from apps
-      const app = state.apps.splice(indexToRemove, 1)[0];
-
-      // restore original dom element
-      app.restoreElement();
-
-      return true;
-    }
-
-    return false;
-  };
-
-  // parses the given context for plugins (does not include the context element itself)
-  parse = context => {
-    // get all possible hooks
-    const matchedHooks = [...context.querySelectorAll(`.${name}`)];
-
-    // filter out already active hooks
-    const newHooks = matchedHooks.filter(
-      newHook => !state.apps.find(app => app.isAttachedTo(newHook))
-    );
-
-    // create new instance for each hook
-    return newHooks.map(hook => create(hook));
-  };
-
-  // returns an app based on the given element hook
-  find = hook => {
-    const app = state.apps.find(app => app.isAttachedTo(hook));
-    if (!app) {
-      return null;
-    }
-    return createAppAPI(app);
-  };
-
-  // adds a plugin extension
-  registerPlugin = (...plugins) => {
-    // register plugins
-    plugins.forEach(createAppPlugin);
-
-    // update OptionTypes, each plugin might have extended the default options
-    updateOptionTypes();
-  };
-
-  getOptions = () => {
-    const opts = {};
-    forin(getOptions$1(), (key, value) => {
-      opts[key] = value[0];
-    });
-    return opts;
-  };
-
-  setOptions = opts => {
-    if (isObject(opts)) {
-      // update existing plugins
-      state.apps.forEach(app => {
-        app.setOptions(opts);
-      });
-
-      // override defaults
-      setOptions$1(opts);
-    }
-
-    // return new options
-    return getOptions();
-  };
 }
 
+// updates the OptionTypes object based on the current options
+const updateOptionTypes = () =>
+  forin(getOptions$1(), (key, value) => {
+    OptionTypes[key] = value[1];
+  });
+
+/**
+ * Public Plugin methods
+ */
+const FileStatus = babelHelpers.extends({}, ItemStatus);
+
+const OptionTypes = {};
+updateOptionTypes();
+
+// create method, creates apps and adds them to the app array
+const create = (...args) => {
+  const app = createApp(...args);
+  app.on('destroy', destroy);
+  state.apps.push(app);
+  return createAppAPI(app);
+};
+
+// destroys apps and removes them from the app array
+const destroy = hook => {
+  // returns true if the app was destroyed successfully
+  const indexToRemove = state.apps.findIndex(app => app.isAttachedTo(hook));
+  if (indexToRemove >= 0) {
+    // remove from apps
+    const app = state.apps.splice(indexToRemove, 1)[0];
+
+    // restore original dom element
+    app.restoreElement();
+
+    return true;
+  }
+
+  return false;
+};
+
+// parses the given context for plugins (does not include the context element itself)
+const parse = context => {
+  // get all possible hooks
+  const matchedHooks = [...context.querySelectorAll(`.${name}`)];
+
+  // filter out already active hooks
+  const newHooks = matchedHooks.filter(
+    newHook => !state.apps.find(app => app.isAttachedTo(newHook))
+  );
+
+  // create new instance for each hook
+  return newHooks.map(hook => create(hook));
+};
+
+// returns an app based on the given element hook
+const find = hook => {
+  const app = state.apps.find(app => app.isAttachedTo(hook));
+  if (!app) {
+    return null;
+  }
+  return createAppAPI(app);
+};
+
+// returns true if plugin is supported
+const isOperaMini = () =>
+  Object.prototype.toString.call(window.operamini) === '[object OperaMini]';
+const hasPromises = () => 'Promise' in window;
+const hasBlobSlice = () => 'slice' in Blob.prototype;
+const hasCreateObjectURL = () =>
+  'URL' in window && 'createObjectURL' in window.URL;
+const hasVisibility = () => 'visibilityState' in document;
+const hasTiming = () => 'performance' in window; // iOS 8.x
+
+const supported = () => {
+  if (!hasNavigator) {
+    return false;
+  }
+  return !(
+    isOperaMini() ||
+    !hasVisibility() ||
+    !hasPromises() ||
+    !hasBlobSlice() ||
+    !hasCreateObjectURL() ||
+    !hasTiming()
+  );
+};
+
+// adds a plugin extension
+const registerPlugin = (...plugins) => {
+  // register plugins
+  plugins.forEach(createAppPlugin);
+
+  // update OptionTypes, each plugin might have extended the default options
+  updateOptionTypes();
+};
+
+const getOptions$$1 = () => {
+  const opts = {};
+  forin(getOptions$1(), (key, value) => {
+    opts[key] = value[0];
+  });
+  return opts;
+};
+
+const setOptions$$1 = opts => {
+  if (isObject(opts)) {
+    // update existing plugins
+    state.apps.forEach(app => {
+      app.setOptions(opts);
+    });
+
+    // override defaults
+    setOptions$1(opts);
+  }
+
+  // return new options
+  return getOptions$$1();
+};
+
 export {
-  supported,
   FileStatus,
   OptionTypes,
   create,
   destroy,
   parse,
   find,
+  supported,
   registerPlugin,
-  getOptions,
-  setOptions,
+  getOptions$$1 as getOptions,
+  setOptions$$1 as setOptions,
   FileOrigin
 };
