@@ -1,8 +1,10 @@
 /*
- * FilePond 1.8.0
+ * FilePond 4.0.1
  * Licensed under MIT, https://opensource.org/licenses/MIT
  * Please visit https://pqina.nl/filepond for details.
  */
+
+/* eslint-disable */
 (function(global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined'
     ? factory(exports)
@@ -16,163 +18,6 @@
     return value instanceof HTMLElement;
   };
 
-  var _typeof =
-    typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
-      ? function(obj) {
-          return typeof obj;
-        }
-      : function(obj) {
-          return obj &&
-            typeof Symbol === 'function' &&
-            obj.constructor === Symbol &&
-            obj !== Symbol.prototype
-            ? 'symbol'
-            : typeof obj;
-        };
-
-  var asyncGenerator = (function() {
-    function AwaitValue(value) {
-      this.value = value;
-    }
-
-    function AsyncGenerator(gen) {
-      var front, back;
-
-      function send(key, arg) {
-        return new Promise(function(resolve, reject) {
-          var request = {
-            key: key,
-            arg: arg,
-            resolve: resolve,
-            reject: reject,
-            next: null
-          };
-
-          if (back) {
-            back = back.next = request;
-          } else {
-            front = back = request;
-            resume(key, arg);
-          }
-        });
-      }
-
-      function resume(key, arg) {
-        try {
-          var result = gen[key](arg);
-          var value = result.value;
-
-          if (value instanceof AwaitValue) {
-            Promise.resolve(value.value).then(
-              function(arg) {
-                resume('next', arg);
-              },
-              function(arg) {
-                resume('throw', arg);
-              }
-            );
-          } else {
-            settle(result.done ? 'return' : 'normal', result.value);
-          }
-        } catch (err) {
-          settle('throw', err);
-        }
-      }
-
-      function settle(type, value) {
-        switch (type) {
-          case 'return':
-            front.resolve({
-              value: value,
-              done: true
-            });
-            break;
-
-          case 'throw':
-            front.reject(value);
-            break;
-
-          default:
-            front.resolve({
-              value: value,
-              done: false
-            });
-            break;
-        }
-
-        front = front.next;
-
-        if (front) {
-          resume(front.key, front.arg);
-        } else {
-          back = null;
-        }
-      }
-
-      this._invoke = send;
-
-      if (typeof gen.return !== 'function') {
-        this.return = undefined;
-      }
-    }
-
-    if (typeof Symbol === 'function' && Symbol.asyncIterator) {
-      AsyncGenerator.prototype[Symbol.asyncIterator] = function() {
-        return this;
-      };
-    }
-
-    AsyncGenerator.prototype.next = function(arg) {
-      return this._invoke('next', arg);
-    };
-
-    AsyncGenerator.prototype.throw = function(arg) {
-      return this._invoke('throw', arg);
-    };
-
-    AsyncGenerator.prototype.return = function(arg) {
-      return this._invoke('return', arg);
-    };
-
-    return {
-      wrap: function(fn) {
-        return function() {
-          return new AsyncGenerator(fn.apply(this, arguments));
-        };
-      },
-      await: function(value) {
-        return new AwaitValue(value);
-      }
-    };
-  })();
-
-  var _extends =
-    Object.assign ||
-    function(target) {
-      for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i];
-
-        for (var key in source) {
-          if (Object.prototype.hasOwnProperty.call(source, key)) {
-            target[key] = source[key];
-          }
-        }
-      }
-
-      return target;
-    };
-
-  var toConsumableArray = function(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++)
-        arr2[i] = arr[i];
-
-      return arr2;
-    } else {
-      return Array.from(arr);
-    }
-  };
-
   var createStore = function createStore(initialState) {
     var queries =
       arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
@@ -180,7 +25,7 @@
       arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
     // internal state
-    var state = _extends({}, initialState);
+    var state = Object.assign({}, initialState);
 
     // contains all actions for next frame, is clear when actions are requested
     var actionQueue = [];
@@ -188,7 +33,7 @@
 
     // returns a duplicate of the current state
     var getState = function getState() {
-      return _extends({}, state);
+      return Object.assign({}, state);
     };
 
     // returns a duplicate of the actions array and clears the actions array
@@ -270,12 +115,12 @@
 
     var queryHandles = {};
     queries.forEach(function(query) {
-      queryHandles = _extends({}, query(state), queryHandles);
+      queryHandles = Object.assign({}, query(state), queryHandles);
     });
 
     var actionHandlers = {};
     actions.forEach(function(action) {
-      actionHandlers = _extends(
+      actionHandlers = Object.assign(
         {},
         action(dispatch, query, state),
         actionHandlers
@@ -285,12 +130,12 @@
     return api;
   };
 
-  var defineProperty$1 = function defineProperty$$1(obj, property, definition) {
+  var defineProperty = function defineProperty(obj, property, definition) {
     if (typeof definition === 'function') {
       obj[property] = definition;
       return;
     }
-    Object.defineProperty(obj, property, _extends({}, definition));
+    Object.defineProperty(obj, property, Object.assign({}, definition));
   };
 
   var forin = function forin(obj, cb) {
@@ -306,7 +151,7 @@
   var createObject = function createObject(definition) {
     var obj = {};
     forin(definition, function(property) {
-      defineProperty$1(obj, property, definition[property]);
+      defineProperty(obj, property, definition[property]);
     });
     return obj;
   };
@@ -319,6 +164,75 @@
       return node.getAttribute(name) || node.hasAttribute(name);
     }
     node.setAttribute(name, value);
+  };
+
+  var _typeof =
+    typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
+      ? function(obj) {
+          return typeof obj;
+        }
+      : function(obj) {
+          return obj &&
+            typeof Symbol === 'function' &&
+            obj.constructor === Symbol &&
+            obj !== Symbol.prototype
+            ? 'symbol'
+            : typeof obj;
+        };
+
+  var slicedToArray = (function() {
+    function sliceIterator(arr, i) {
+      var _arr = [];
+      var _n = true;
+      var _d = false;
+      var _e = undefined;
+
+      try {
+        for (
+          var _i = arr[Symbol.iterator](), _s;
+          !(_n = (_s = _i.next()).done);
+          _n = true
+        ) {
+          _arr.push(_s.value);
+
+          if (i && _arr.length === i) break;
+        }
+      } catch (err) {
+        _d = true;
+        _e = err;
+      } finally {
+        try {
+          if (!_n && _i['return']) _i['return']();
+        } finally {
+          if (_d) throw _e;
+        }
+      }
+
+      return _arr;
+    }
+
+    return function(arr, i) {
+      if (Array.isArray(arr)) {
+        return arr;
+      } else if (Symbol.iterator in Object(arr)) {
+        return sliceIterator(arr, i);
+      } else {
+        throw new TypeError(
+          'Invalid attempt to destructure non-iterable instance'
+        );
+      }
+    };
+  })();
+
+  var toConsumableArray = function(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++)
+        arr2[i] = arr[i];
+
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
   };
 
   var ns = 'http://www.w3.org/2000/svg';
@@ -367,8 +281,6 @@
 
   var appendChildView = function appendChildView(parent, childViews) {
     return function(view, index) {
-      // todo: expand with location and target option (child, 'before', target)
-
       if (typeof index !== 'undefined') {
         childViews.splice(index, 0, view);
       } else {
@@ -406,7 +318,7 @@
 
     var rect = {
       // the rectangle of the element itself
-      element: _extends({}, elementRect),
+      element: Object.assign({}, elementRect),
 
       // the rectangle of the element expanded to contain its children, does not include any margins
       inner: {
@@ -435,8 +347,8 @@
         return childView.rect;
       })
       .forEach(function(childViewRect) {
-        expandRect(rect.inner, _extends({}, childViewRect.inner));
-        expandRect(rect.outer, _extends({}, childViewRect.outer));
+        expandRect(rect.inner, Object.assign({}, childViewRect.inner));
+        expandRect(rect.outer, Object.assign({}, childViewRect.outer));
       });
 
     // calculate inner width and height
@@ -569,6 +481,12 @@
           position = value;
         }
 
+        // next target value will not be animated to
+        if (target === null) {
+          target = value;
+          position = value;
+        }
+
         // let start moving to target
         target = value;
 
@@ -655,10 +573,10 @@
           api.onupdate((t >= 0 ? easing(reverse ? 1 - p : p) : 0) * target);
         } else {
           t = 1;
-          resting = true;
           p = reverse ? 0 : 1;
           api.onupdate(p * target);
           api.oncomplete(p * target);
+          resting = true;
         }
       };
 
@@ -727,7 +645,7 @@
     var type = typeof def === 'string' ? def : def.type;
     var props =
       (typeof def === 'undefined' ? 'undefined' : _typeof(def)) === 'object'
-        ? _extends({}, def)
+        ? Object.assign({}, def)
         : {};
 
     return animator[type] ? animator[type](props) : null;
@@ -768,12 +686,8 @@
     });
   };
 
-  var isEmpty = function isEmpty(value) {
-    return value == null;
-  };
-
   var isDefined = function isDefined(value) {
-    return !isEmpty(value);
+    return value != null;
   };
 
   // add to state,
@@ -787,7 +701,7 @@
       viewExternalAPI = _ref.viewExternalAPI;
 
     // initial properties
-    var initialProps = _extends({}, viewProps);
+    var initialProps = Object.assign({}, viewProps);
 
     // list of all active animations
     var animations = [];
@@ -835,10 +749,10 @@
       write: function write(ts) {
         var resting = true;
         animations.forEach(function(animation) {
-          animation.interpolate(ts);
           if (!animation.resting) {
             resting = false;
           }
+          animation.interpolate(ts);
         });
         return resting;
       },
@@ -926,7 +840,9 @@
     translateY: 0,
     rotateX: 0,
     rotateY: 0,
-    rotateZ: 0
+    rotateZ: 0,
+    originX: 0,
+    originY: 0
   };
 
   var styles = function styles(_ref) {
@@ -937,7 +853,7 @@
       view = _ref.view;
 
     // initial props
-    var initialProps = _extends({}, viewProps);
+    var initialProps = Object.assign({}, viewProps);
 
     // current props
     var currentProps = {};
@@ -980,10 +896,7 @@
         applyStyles(view.element, viewProps);
 
         // store new transforms
-        Object.assign.apply(
-          Object,
-          [currentProps].concat(toConsumableArray(viewProps))
-        );
+        Object.assign(currentProps, Object.assign({}, viewProps));
 
         // no longer busy
         return true;
@@ -1010,6 +923,7 @@
 
   var applyStyles = function applyStyles(element, _ref2) {
     var opacity = _ref2.opacity,
+      perspective = _ref2.perspective,
       translateX = _ref2.translateX,
       translateY = _ref2.translateY,
       scaleX = _ref2.scaleX,
@@ -1017,83 +931,101 @@
       rotateX = _ref2.rotateX,
       rotateY = _ref2.rotateY,
       rotateZ = _ref2.rotateZ,
+      originX = _ref2.originX,
+      originY = _ref2.originY,
+      width = _ref2.width,
       height = _ref2.height;
 
-    var transforms = [];
-    var styles = [];
+    var transforms = '';
+    var styles = '';
+
+    // handle transform origin
+    if (isDefined(originX) || isDefined(originY)) {
+      styles +=
+        'transform-origin: ' + (originX || 0) + 'px ' + (originY || 0) + 'px;';
+    }
 
     // transform order is relevant
+    // 0. perspective
+    if (isDefined(perspective)) {
+      transforms += 'perspective(' + perspective + 'px) ';
+    }
 
     // 1. translate
     if (isDefined(translateX) || isDefined(translateY)) {
-      transforms.push(
+      transforms +=
         'translate3d(' +
-          (translateX || 0) +
-          'px, ' +
-          (translateY || 0) +
-          'px, 0)'
-      );
+        (translateX || 0) +
+        'px, ' +
+        (translateY || 0) +
+        'px, 0) ';
     }
 
     // 2. scale
     if (isDefined(scaleX) || isDefined(scaleY)) {
-      transforms.push(
+      transforms +=
         'scale3d(' +
-          (isDefined(scaleX) ? scaleX : 1) +
-          ', ' +
-          (isDefined(scaleY) ? scaleY : 1) +
-          ', 1)'
-      );
+        (isDefined(scaleX) ? scaleX : 1) +
+        ', ' +
+        (isDefined(scaleY) ? scaleY : 1) +
+        ', 1) ';
     }
 
     // 3. rotate
-    if (isDefined(rotateZ) || isDefined(rotateY) || isDefined(rotateX)) {
-      transforms.push(
-        'rotate3d(' +
-          (rotateX || 0) +
-          ', ' +
-          (rotateY || 0) +
-          ', ' +
-          (rotateZ || 0) +
-          ', 360deg)'
-      );
+    if (isDefined(rotateZ)) {
+      transforms += 'rotateZ(' + rotateZ + 'rad) ';
+    }
+
+    if (isDefined(rotateX)) {
+      transforms += 'rotateX(' + rotateX + 'rad) ';
+    }
+
+    if (isDefined(rotateY)) {
+      transforms += 'rotateY(' + rotateY + 'rad) ';
     }
 
     // add transforms
     if (transforms.length) {
-      styles.push('transform:' + transforms.join(' '));
+      styles += 'transform:' + transforms + ';';
     }
 
     // add opacity
     if (isDefined(opacity)) {
-      styles.push('opacity:' + opacity);
+      styles += 'opacity:' + opacity + ';';
 
       // if we reach zero, we make the element inaccessible
       if (opacity === 0) {
-        styles.push('visibility:hidden');
+        styles += 'visibility:hidden;';
       }
 
       // if we're below 100% opacity this element can't be clicked
       if (opacity < 1) {
-        styles.push('pointer-events:none;');
+        styles += 'pointer-events:none;';
       }
     }
 
     // add height
     if (isDefined(height)) {
-      styles.push('height:' + height + 'px');
+      styles += 'height:' + height + 'px;';
+    }
+
+    // add width
+    if (isDefined(width)) {
+      styles += 'width:' + width + 'px;';
     }
 
     // apply styles
-    var currentStyles = element.getAttribute('style') || '';
-    var newStyles = styles.join(';');
+    var elementCurrentStyle = element.elementCurrentStyle || '';
 
     // if new styles does not match current styles, lets update!
     if (
-      newStyles.length !== currentStyles.length ||
-      newStyles !== currentStyles
+      styles.length !== elementCurrentStyle.length ||
+      styles !== elementCurrentStyle
     ) {
-      element.setAttribute('style', newStyles);
+      element.setAttribute('style', styles);
+      // store current styles so we can compare them to new styles later on
+      // _not_ getting the style attribute is faster
+      element.elementCurrentStyle = styles;
     }
   };
 
@@ -1112,11 +1044,14 @@
     var style =
       arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-    rect.paddingTop = parseInt(style.paddingTop, 10) || 0;
-    rect.marginTop = parseInt(style.marginTop, 10) || 0;
-    rect.marginRight = parseInt(style.marginRight, 10) || 0;
-    rect.marginBottom = parseInt(style.marginBottom, 10) || 0;
-    rect.marginLeft = parseInt(style.marginLeft, 10) || 0;
+    if (!element.layoutCalculated) {
+      rect.paddingTop = parseInt(style.paddingTop, 10) || 0;
+      rect.marginTop = parseInt(style.marginTop, 10) || 0;
+      rect.marginRight = parseInt(style.marginRight, 10) || 0;
+      rect.marginBottom = parseInt(style.marginBottom, 10) || 0;
+      rect.marginLeft = parseInt(style.marginLeft, 10) || 0;
+      element.layoutCalculated = true;
+    }
 
     rect.left = element.offsetLeft || 0;
     rect.top = element.offsetTop || 0;
@@ -1164,8 +1099,14 @@
         _ref$didCreateView = _ref.didCreateView,
         didCreateView =
           _ref$didCreateView === undefined ? function() {} : _ref$didCreateView,
+        _ref$didWriteView = _ref.didWriteView,
+        didWriteView =
+          _ref$didWriteView === undefined ? function() {} : _ref$didWriteView,
         _ref$ignoreRect = _ref.ignoreRect,
         ignoreRect = _ref$ignoreRect === undefined ? false : _ref$ignoreRect,
+        _ref$ignoreRectUpdate = _ref.ignoreRectUpdate,
+        ignoreRectUpdate =
+          _ref$ignoreRectUpdate === undefined ? false : _ref$ignoreRectUpdate,
         _ref$mixins = _ref.mixins,
         mixins = _ref$mixins === undefined ? [] : _ref$mixins;
 
@@ -1187,6 +1128,9 @@
         // element rectangle
         var rect = updateRect();
         var frameRect = null;
+
+        // rest state
+        var isResting = false;
 
         // pretty self explanatory
         var childViews = [];
@@ -1251,12 +1195,15 @@
             return child._read();
           });
 
-          // update my rectangle
-          updateRect(rect, element, style);
+          var shouldUpdate = !(ignoreRectUpdate && rect.width && rect.height);
+          if (shouldUpdate) {
+            updateRect(rect, element, style);
+          }
 
-          // writers
+          // readers
+          var api = { root: internalAPI, props: props, rect: rect };
           readers.forEach(function(reader) {
-            return reader({ root: internalAPI, props: props, rect: rect });
+            return reader(api);
           });
         };
 
@@ -1264,12 +1211,7 @@
          * Write data to DOM
          * @private
          */
-        var _write = function _write(ts) {
-          var frameActions =
-            arguments.length > 1 && arguments[1] !== undefined
-              ? arguments[1]
-              : [];
-
+        var _write = function _write(ts, frameActions, shouldOptimize) {
           // if no actions, we assume that the view is resting
           var resting = frameActions.length === 0;
 
@@ -1279,7 +1221,8 @@
               props: props,
               root: internalAPI,
               actions: frameActions,
-              timestamp: ts
+              timestamp: ts,
+              shouldOptimize: shouldOptimize
             });
             if (writerResting === false) {
               resting = false;
@@ -1304,7 +1247,8 @@
               // if a child view is not resting, we are not resting
               var childResting = child._write(
                 ts,
-                filterFrameActionsForChild(child, frameActions)
+                filterFrameActionsForChild(child, frameActions),
+                shouldOptimize
               );
               if (!childResting) {
                 resting = false;
@@ -1313,10 +1257,13 @@
 
           // append new elements to DOM and update those
           childViews
-            .filter(function(child) {
-              return !child.element.parentNode;
-            })
+            //.filter(child => !child.element.parentNode)
             .forEach(function(child, index) {
+              // skip
+              if (child.element.parentNode) {
+                return;
+              }
+
               // append to DOM
               internalAPI.appendChild(child.element, index);
 
@@ -1324,11 +1271,25 @@
               child._read();
 
               // re-call write
-              child._write(ts, filterFrameActionsForChild(child, frameActions));
+              child._write(
+                ts,
+                filterFrameActionsForChild(child, frameActions),
+                shouldOptimize
+              );
 
               // we just added somthing to the dom, no rest
               resting = false;
             });
+
+          // update resting state
+          isResting = resting;
+
+          didWriteView({
+            props: props,
+            root: internalAPI,
+            actions: frameActions,
+            timestamp: ts
+          });
 
           // let parent know if we are resting
           return resting;
@@ -1339,7 +1300,7 @@
             return mixin.destroy();
           });
           destroyers.forEach(function(destroyer) {
-            return destroyer({ root: internalAPI });
+            destroyer({ root: internalAPI, props: props });
           });
           childViews.forEach(function(child) {
             return child._destroy();
@@ -1360,7 +1321,7 @@
         };
 
         // private API definition
-        var internalAPIDefinition = _extends({}, sharedAPIDefinition, {
+        var internalAPIDefinition = Object.assign({}, sharedAPIDefinition, {
           rect: {
             get: getRect
           },
@@ -1376,6 +1337,13 @@
           },
           appendChild: appendChild(element),
           createChildView: createChildView(store),
+          linkView: function linkView(view) {
+            childViews.push(view);
+            return view;
+          },
+          unlinkView: function unlinkView(view) {
+            childViews.splice(childViews.indexOf(view), 1);
+          },
           appendChildView: appendChildView(element, childViews),
           removeChildView: removeChildView(element, childViews),
           registerWriter: function registerWriter(writer) {
@@ -1383,6 +1351,12 @@
           },
           registerReader: function registerReader(reader) {
             return readers.push(reader);
+          },
+          registerDestroyer: function registerDestroyer(destroyer) {
+            return destroyers.push(destroyer);
+          },
+          invalidateLayout: function invalidateLayout() {
+            return (element.layoutCalculated = false);
           },
 
           // access to data store
@@ -1401,6 +1375,11 @@
           rect: {
             get: getRect
           },
+          resting: {
+            get: function get() {
+              return isResting;
+            }
+          },
           isRectIgnored: function isRectIgnored() {
             return ignoreRect;
           },
@@ -1410,9 +1389,9 @@
         };
 
         // mixin API methods
-        var mixinAPIDefinition = _extends({}, sharedAPIDefinition, {
+        var mixinAPIDefinition = Object.assign({}, sharedAPIDefinition, {
           rect: {
-            get: function get$$1() {
+            get: function get() {
               return rect;
             }
           }
@@ -1467,9 +1446,25 @@
       };
     };
 
-  var createPainter = function createPainter(update) {
+  var createPainter = function createPainter(read, write) {
     var fps =
-      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 60;
+      arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 60;
+
+    var name = '__framePainter';
+
+    // set global painter
+    if (window[name]) {
+      window[name].readers.push(read);
+      window[name].writers.push(write);
+      return;
+    }
+
+    window[name] = {
+      readers: [read],
+      writers: [write]
+    };
+
+    var painter = window[name];
 
     var interval = 1000 / fps;
     var last = null;
@@ -1495,7 +1490,12 @@
       last = ts - delta % interval;
 
       // update view
-      update(ts);
+      painter.readers.forEach(function(read) {
+        return read();
+      });
+      painter.writers.forEach(function(write) {
+        return write(ts);
+      });
     };
 
     tick(performance.now());
@@ -1507,26 +1507,14 @@
     };
   };
 
-  var createUpdater = function createUpdater(apps, reader, writer) {
-    return function(ts) {
-      // all reads first (as these are free at the start of the frame)
-      apps.forEach(function(app) {
-        return app[reader]();
-      });
-
-      // now update the DOM
-      apps.forEach(function(app) {
-        return app[writer](ts);
-      });
-    };
-  };
-
-  var createRoute = function createRoute(routes) {
+  var createRoute = function createRoute(routes, fn) {
     return function(_ref) {
       var root = _ref.root,
         props = _ref.props,
         _ref$actions = _ref.actions,
-        actions = _ref$actions === undefined ? [] : _ref$actions;
+        actions = _ref$actions === undefined ? [] : _ref$actions,
+        timestamp = _ref.timestamp,
+        shouldOptimize = _ref.shouldOptimize;
 
       actions
         .filter(function(action) {
@@ -1536,9 +1524,20 @@
           return routes[action.type]({
             root: root,
             props: props,
-            action: action.data
+            action: action.data,
+            timestamp: timestamp,
+            shouldOptimize: shouldOptimize
           });
         });
+      if (fn) {
+        fn({
+          root: root,
+          props: props,
+          actions: actions,
+          timestamp: timestamp,
+          shouldOptimize: shouldOptimize
+        });
+      }
     };
   };
 
@@ -1555,6 +1554,10 @@
 
   var isArray = function isArray(value) {
     return Array.isArray(value);
+  };
+
+  var isEmpty = function isEmpty(value) {
+    return value == null;
   };
 
   var trim = function trim(str) {
@@ -1637,6 +1640,10 @@
     return toInt(naturalFileSize);
   };
 
+  var isFunction = function isFunction(value) {
+    return typeof value === 'function';
+  };
+
   var toFunctionReference = function toFunctionReference(string) {
     var ref = self;
     var levels = string.split('.');
@@ -1662,11 +1669,14 @@
     var api = {};
 
     api.url = isString(outline) ? outline : outline.url || '';
-    api.timeout = outline.timeout ? parseInt(outline.timeout, 10) : 7000;
+    api.timeout = outline.timeout ? parseInt(outline.timeout, 10) : 0;
 
     forin(methods, function(key) {
       api[key] = createAction(key, outline[key], methods[key], api.timeout);
     });
+
+    // special treatment for remove
+    api.remove = outline.remove || null;
 
     return api;
   };
@@ -1690,6 +1700,7 @@
       withCredentials: false,
       timeout: timeout,
       onload: null,
+      ondata: null,
       onerror: null
     };
 
@@ -1785,7 +1796,9 @@
     },
     float: toFloat,
     bytes: toBytes,
-    string: toString,
+    string: function string(value) {
+      return isFunction(value) ? value : toString(value);
+    },
     serverapi: toServerAPI,
     object: function object(value) {
       try {
@@ -1840,10 +1853,10 @@
     return newValue;
   };
 
-  var createOption = function createOption(option, defaultValue, valueType) {
+  var createOption = function createOption(defaultValue, valueType) {
     var currentValue = defaultValue;
-
     return {
+      enumerable: true,
       get: function get() {
         return currentValue;
       },
@@ -1857,7 +1870,7 @@
     var obj = {};
     forin(options, function(prop) {
       var optionDefinition = options[prop];
-      obj[prop] = createOption(prop, optionDefinition[0], optionDefinition[1]);
+      obj[prop] = createOption(optionDefinition[0], optionDefinition[1]);
     });
     return createObject(obj);
   };
@@ -1866,6 +1879,12 @@
     return {
       // model
       items: [],
+
+      // timeout used for calling update items
+      listUpdateTimeout: null,
+
+      // queue of items waiting to be processed
+      processingQueue: [],
 
       // options
       options: createOptions(options)
@@ -1905,6 +1924,7 @@
       var obj = {};
       forin(options, function(key) {
         var name = fromCamels(key, '_').toUpperCase();
+
         obj['SET_' + name] = function(action) {
           try {
             state.options[key] = action.value;
@@ -1945,19 +1965,6 @@
       .substr(2, 9);
   };
 
-  var forEachDelayed = function forEachDelayed(items, cb) {
-    var delay =
-      arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 75;
-    return items.map(function(item, index) {
-      return new Promise(function(resolve, reject) {
-        setTimeout(function() {
-          cb(item);
-          resolve();
-        }, delay * index);
-      });
-    });
-  };
-
   var arrayRemove = function arrayRemove(arr, index) {
     return arr.splice(index, 1);
   };
@@ -1984,18 +1991,18 @@
           args[_key - 1] = arguments[_key];
         }
 
-        setTimeout(function() {
-          listeners
-            .filter(function(listener) {
-              return listener.event === event;
-            })
-            .map(function(listener) {
-              return listener.cb;
-            })
-            .forEach(function(cb) {
+        listeners
+          .filter(function(listener) {
+            return listener.event === event;
+          })
+          .map(function(listener) {
+            return listener.cb;
+          })
+          .forEach(function(cb) {
+            setTimeout(function() {
               cb.apply(undefined, args);
-            });
-        }, 0);
+            }, 0);
+          });
       },
       on: function on(event, cb) {
         listeners.push({ event: event, cb: cb });
@@ -2031,7 +2038,7 @@
       });
   };
 
-  var PRIVATE_METHODS = [
+  var PRIVATE = [
     'fire',
     'process',
     'revert',
@@ -2039,13 +2046,27 @@
     'on',
     'off',
     'onOnce',
-    'retryLoad'
+    'retryLoad',
+    'extend',
+    'archive',
+    'archived',
+    'release',
+    'released',
+    'requestProcessing'
   ];
 
   var createItemAPI = function createItemAPI(item) {
     var api = {};
-    copyObjectPropertiesToObject(item, api, PRIVATE_METHODS);
+    copyObjectPropertiesToObject(item, api, PRIVATE);
     return api;
+  };
+
+  var removeReleasedItems = function removeReleasedItems(items) {
+    items.forEach(function(item, index) {
+      if (item.released) {
+        arrayRemove(items, index);
+      }
+    });
   };
 
   var getNonNumeric = function getNonNumeric(str) {
@@ -2148,7 +2169,7 @@
   };
 
   var getOptions$1 = function getOptions() {
-    return _extends({}, defaultOptions);
+    return Object.assign({}, defaultOptions);
   };
 
   var setOptions$1 = function setOptions(opts) {
@@ -2192,64 +2213,29 @@
     allowMultiple: [false, Type.BOOLEAN], // Allow multiple files (disabled by default, as multiple attribute is also required on input to allow multiple)
     allowReplace: [true, Type.BOOLEAN], // Allow dropping a file on other file to replace it (only works when multiple is set to false)
     allowRevert: [true, Type.BOOLEAN], // Allows user to revert file upload
-    // TODO: allowDrag: [true, Type.BOOLEAN],					// Allow dragging files
-    // TODO: allowSwipe: [true, Type.BOOLEAN],					// Allow swipe to remove files
-    // TODO: allowRemoveAll: [true, Type.BOOLEAN],				// Allow removing all items at once
-    // TODO: allowUploadAll: [true, Type.BOOLEAN],				// Allow uploading all items at once
+
+    // Revert mode
+    forceRevert: [false, Type.BOOLEAN], // Set to 'force' to require the file to be reverted before removal
 
     // Input requirements
     maxFiles: [null, Type.INT], // Max number of files
+    checkValidity: [false, Type.BOOLEAN], // Enables custom validity messages
+
+    // Where to put file
+    itemInsertLocation: ['before', Type.STRING], // Default index in list to add items that have been dropped at the top of the list
+    itemInsertInterval: [75, Type.INT],
 
     // Drag 'n Drop related
     dropOnPage: [false, Type.BOOLEAN], // Allow dropping of files anywhere on page (prevents browser from opening file if dropped outside of Up)
     dropOnElement: [true, Type.BOOLEAN], // Drop needs to happen on element (set to false to also load drops outside of Up)
     dropValidation: [false, Type.BOOLEAN], // Enable or disable validating files on drop
     ignoredFiles: [['.ds_store', 'thumbs.db', 'desktop.ini'], Type.ARRAY],
-    // catchDirectories: [true, Type.BOOLEAN],					// Allow dropping directories in modern browsers
 
     // Upload related
     instantUpload: [true, Type.BOOLEAN], // Should upload files immidiately on drop
-    // TODO: parallel: [1, Type.INT],							// Maximum files to upload in parallel
-    // TODO: chunks: [false, Type.BOOLEAN],						// Use chunk uploading
-    // TODO: chunkSize: [.5 * (1024 * 1024), Type.INT],			// Upload in 512KB chunks
+    maxParallelUploads: [2, Type.INT], // Maximum files to upload in parallel
 
-    // by default no async api is supplied
-    /* expected format
-    {
-    url: '',
-    timeout: 1000,
-    process: {
-    url: '',
-    method: 'POST',
-            withCredentials: false,
-    headers: {},
-            onload: (response) => {
-                return response.id
-            }
-    },
-    revert: {
-    url: '',
-    method: 'DELETE',
-    withCredentials: false,
-    headers: {},
-            onload: null
-    },
-    fetch: {
-    url: '',
-    method: 'GET',
-    withCredentials: false,
-    headers: {},
-            onload: null
-    },
-    restore: {
-    url: '',
-    method: 'GET',
-    withCredentials: false,
-    headers: {},
-            onload: null
-    }
-    }
-    */
+    // The server api end points to use for uploading (see docs)
     server: [null, Type.SERVER_API],
 
     // Labels and status messages
@@ -2260,26 +2246,25 @@
       'Drag & Drop your files or <span class="filepond--label-action">Browse</span>',
       Type.STRING
     ],
-
+    labelInvalidField: ['Field contains invalid files', Type.STRING],
     labelFileWaitingForSize: ['Waiting for size', Type.STRING],
     labelFileSizeNotAvailable: ['Size not available', Type.STRING],
     labelFileCountSingular: ['file in list', Type.STRING],
     labelFileCountPlural: ['files in list', Type.STRING],
     labelFileLoading: ['Loading', Type.STRING],
     labelFileAdded: ['Added', Type.STRING], // assistive only
-    labelFileRemoved: ['Removed', Type.STRING], // assistive only
     labelFileLoadError: ['Error during load', Type.STRING],
+    labelFileRemoved: ['Removed', Type.STRING], // assistive only
+    labelFileRemoveError: ['Error during remove', Type.STRING],
     labelFileProcessing: ['Uploading', Type.STRING],
     labelFileProcessingComplete: ['Upload complete', Type.STRING],
     labelFileProcessingAborted: ['Upload cancelled', Type.STRING],
     labelFileProcessingError: ['Error during upload', Type.STRING],
-    // labelFileProcessingPaused: ['Upload paused', Type.STRING],
+    labelFileProcessingRevertError: ['Error during revert', Type.STRING],
 
     labelTapToCancel: ['tap to cancel', Type.STRING],
     labelTapToRetry: ['tap to retry', Type.STRING],
     labelTapToUndo: ['tap to undo', Type.STRING],
-    // labelTapToPause: ['tap to pause', Type.STRING],
-    // labelTapToResume: ['tap to resume', Type.STRING],
 
     labelButtonRemoveItem: ['Remove', Type.STRING],
     labelButtonAbortItemLoad: ['Abort', Type.STRING],
@@ -2324,13 +2309,24 @@
     onprocessfilerevert: [null, Type.FUNCTION],
     onprocessfile: [null, Type.FUNCTION],
     onremovefile: [null, Type.FUNCTION],
+    onpreparefile: [null, Type.FUNCTION],
+    onupdatefiles: [null, Type.FUNCTION],
+
+    // hooks
+    beforeAddFile: [null, Type.FUNCTION],
+    beforeRemoveFile: [null, Type.FUNCTION],
+
+    // styles
+    stylePanelLayout: [null, Type.STRING], // null 'integrated', 'compact', 'circle'
+    stylePanelAspectRatio: [null, Type.STRING], // null or '3:2' or 1
+    styleItemPanelAspectRatio: [null, Type.STRING],
+    styleButtonRemoveItemPosition: ['left', Type.STRING],
+    styleButtonProcessItemPosition: ['right', Type.STRING],
+    styleLoadIndicatorPosition: ['right', Type.STRING],
+    styleProgressIndicatorPosition: ['right', Type.STRING],
 
     // custom initial files array
     files: [[], Type.ARRAY]
-  };
-
-  var isFunction = function isFunction(value) {
-    return typeof value === 'function';
   };
 
   var getItemByQuery = function getItemByQuery(items, query) {
@@ -2359,14 +2355,45 @@
     );
   };
 
+  var getNumericAspectRatioFromString = function getNumericAspectRatioFromString(
+    aspectRatio
+  ) {
+    if (isEmpty(aspectRatio)) {
+      return aspectRatio;
+    }
+    if (/:/.test(aspectRatio)) {
+      var _aspectRatio$split = aspectRatio.split(':'),
+        _aspectRatio$split2 = slicedToArray(_aspectRatio$split, 2),
+        w = _aspectRatio$split2[0],
+        h = _aspectRatio$split2[1];
+
+      return h / w;
+    }
+    return parseFloat(aspectRatio);
+  };
+
+  var getActiveItems = function getActiveItems(items) {
+    return items.filter(function(item) {
+      return !item.archived;
+    });
+  };
+
   var queries = function queries(state) {
     return {
       GET_ITEM: function GET_ITEM(query) {
         return getItemByQuery(state.items, query);
       },
 
+      GET_ACTIVE_ITEM: function GET_ACTIVE_ITEM(query) {
+        return getItemByQuery(getActiveItems(state.items), query);
+      },
+
+      GET_ACTIVE_ITEMS: function GET_ACTIVE_ITEMS(query) {
+        return getActiveItems(state.items);
+      },
+
       GET_ITEMS: function GET_ITEMS(query) {
-        return [].concat(toConsumableArray(state.items));
+        return state.items;
       },
 
       GET_ITEM_NAME: function GET_ITEM_NAME(query) {
@@ -2379,8 +2406,41 @@
         return item ? item.fileSize : null;
       },
 
+      GET_STYLES: function GET_STYLES() {
+        return Object.keys(state.options)
+          .filter(function(key) {
+            return /^style/.test(key);
+          })
+          .map(function(option) {
+            return {
+              name: option,
+              value: state.options[option]
+            };
+          });
+      },
+
+      GET_PANEL_ASPECT_RATIO: function GET_PANEL_ASPECT_RATIO() {
+        var isShapeCircle = /circle/.test(state.options.stylePanelLayout);
+        var aspectRatio = isShapeCircle
+          ? 1
+          : getNumericAspectRatioFromString(
+              state.options.stylePanelAspectRatio
+            );
+        return aspectRatio;
+      },
+
+      GET_ITEM_PANEL_ASPECT_RATIO: function GET_ITEM_PANEL_ASPECT_RATIO() {
+        return state.options.styleItemPanelAspectRatio;
+      },
+
+      GET_ITEMS_BY_STATUS: function GET_ITEMS_BY_STATUS(status) {
+        return getActiveItems(state.items).filter(function(item) {
+          return item.status === status;
+        });
+      },
+
       GET_TOTAL_ITEMS: function GET_TOTAL_ITEMS() {
-        return state.items.length;
+        return getActiveItems(state.items).length;
       },
 
       IS_ASYNC: function IS_ASYNC() {
@@ -2394,7 +2454,7 @@
   };
 
   var hasRoomForItem = function hasRoomForItem(state) {
-    var count = state.items.length;
+    var count = getActiveItems(state.items).length;
 
     // if cannot have multiple items, to add one item it should currently not contain items
     if (!state.options.allowMultiple) {
@@ -2443,32 +2503,6 @@
 
     // expose
     return item;
-  };
-
-  var leftPad = function leftPad(value) {
-    var padding =
-      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    return (padding + value).slice(-padding.length);
-  };
-
-  var getDateString = function getDateString() {
-    var date =
-      arguments.length > 0 && arguments[0] !== undefined
-        ? arguments[0]
-        : new Date();
-    return (
-      date.getFullYear() +
-      '-' +
-      leftPad(date.getMonth() + 1, '00') +
-      '-' +
-      leftPad(date.getDate(), '00') +
-      '_' +
-      leftPad(date.getHours(), '00') +
-      '-' +
-      leftPad(date.getMinutes(), '00') +
-      '-' +
-      leftPad(date.getSeconds(), '00')
-    );
   };
 
   var isBase64DataURI = function isBase64DataURI(str) {
@@ -2529,6 +2563,32 @@
     return '';
   };
 
+  var leftPad = function leftPad(value) {
+    var padding =
+      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    return (padding + value).slice(-padding.length);
+  };
+
+  var getDateString = function getDateString() {
+    var date =
+      arguments.length > 0 && arguments[0] !== undefined
+        ? arguments[0]
+        : new Date();
+    return (
+      date.getFullYear() +
+      '-' +
+      leftPad(date.getMonth() + 1, '00') +
+      '-' +
+      leftPad(date.getDate(), '00') +
+      '_' +
+      leftPad(date.getHours(), '00') +
+      '-' +
+      leftPad(date.getMinutes(), '00') +
+      '-' +
+      leftPad(date.getSeconds(), '00')
+    );
+  };
+
   var getFileFromBlob = function getFileFromBlob(blob, filename) {
     var type =
       arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
@@ -2541,6 +2601,11 @@
         : blob.slice(0, blob.size, blob.type);
     file.lastModifiedDate = new Date();
 
+    // if blob has name property, use as filename if no filename supplied
+    if (!isString(filename)) {
+      filename = getDateString();
+    }
+
     // if filename supplied but no extension and filename has extension
     if (filename && extension === null && getExtensionFromFilename(filename)) {
       file.name = filename;
@@ -2548,6 +2613,7 @@
       extension = extension || guesstimateExtension(file.type);
       file.name = filename + (extension ? '.' + extension : '');
     }
+
     return file;
   };
 
@@ -2629,7 +2695,34 @@
     );
   };
 
-  var getFilenameFromHeaders = function getFilenameFromHeaders(headers) {
+  var getFileNameFromHeader = function getFileNameFromHeader(header) {
+    var matches = header.match(/(?:filename="(.+)")|(?:filename=(.+))/) || [];
+    return matches[1] || matches[2];
+  };
+
+  var getFileSizeFromHeader = function getFileSizeFromHeader(header) {
+    if (/content-length:/i.test(header)) {
+      var size = header.match(/[0-9]+/)[0];
+      return size ? parseInt(size, 10) : null;
+    }
+    return null;
+  };
+
+  var getTranfserIdFromHeader = function getTranfserIdFromHeader(header) {
+    if (/x-content-transfer-id:/i.test(header)) {
+      var id = (header.split(':')[1] || '').trim();
+      return id || null;
+    }
+    return null;
+  };
+
+  var getFileInfoFromHeaders = function getFileInfoFromHeaders(headers) {
+    var info = {
+      source: null,
+      name: null,
+      size: null
+    };
+
     var rows = headers.split('\n');
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
@@ -2643,11 +2736,23 @@
       ) {
         var header = _step.value;
 
-        var matches = header.match(/filename="(.+)"/);
-        if (!matches || !matches[1]) {
+        var name = getFileNameFromHeader(header);
+        if (name) {
+          info.name = name;
           continue;
         }
-        return matches[1];
+
+        var size = getFileSizeFromHeader(header);
+        if (size) {
+          info.size = size;
+          continue;
+        }
+
+        var source = getTranfserIdFromHeader(header);
+        if (source) {
+          info.source = source;
+          continue;
+        }
       }
     } catch (err) {
       _didIteratorError = true;
@@ -2664,14 +2769,7 @@
       }
     }
 
-    return null;
-  };
-
-  var renameFile = function renameFile(file, name) {
-    var renamedFile = file.slice(0, file.size, file.type);
-    renamedFile.lastModifiedDate = file.lastModifiedDate;
-    renamedFile.name = name;
-    return renamedFile;
+    return info;
   };
 
   var createFileLoader = function createFileLoader(fetchFn) {
@@ -2707,10 +2805,10 @@
         api.fire('load', source);
       } else if (source instanceof Blob) {
         // Load blobs, set default name to current date
-        api.fire('load', getFileFromBlob(source, getDateString()));
+        api.fire('load', getFileFromBlob(source, source.name));
       } else if (isBase64DataURI(source)) {
         // Load base 64, set default name to current date
-        api.fire('load', getFileFromBase64DataURI(source, getDateString()));
+        api.fire('load', getFileFromBase64DataURI(source));
       } else {
         // Deal as if is external URL, let's load it!
         loadURL(source);
@@ -2744,10 +2842,7 @@
 
           // turn blob response into a file
           if (response instanceof Blob) {
-            response = getFileFromBlob(
-              response,
-              getFilenameFromURL(url) || getDateString()
-            );
+            response = getFileFromBlob(response, getFilenameFromURL(url));
           }
 
           api.fire('load', response instanceof Blob ? response : response.body);
@@ -2789,17 +2884,19 @@
           api.fire('abort');
         },
         function(response) {
+          var fileinfo = getFileInfoFromHeaders(
+            typeof response === 'string' ? response : response.headers
+          );
           api.fire('meta', {
-            size: state.size,
-            filename: getFilenameFromHeaders(
-              typeof response === 'string' ? response : response.headers
-            )
+            size: state.size || fileinfo.size,
+            filename: fileinfo.name,
+            source: fileinfo.source
           });
         }
       );
     };
 
-    var api = _extends({}, on(), {
+    var api = Object.assign({}, on(), {
       setSource: function setSource(source) {
         return (state.source = source);
       },
@@ -2811,13 +2908,8 @@
     return api;
   };
 
-  var createResponse$1 = function createResponse(type, code, body, headers) {
-    return {
-      type: type,
-      code: code,
-      body: body,
-      headers: headers
-    };
+  var isGet = function isGet(method) {
+    return /GET|HEAD/.test(method);
   };
 
   var sendRequest = function sendRequest(data, url, options) {
@@ -2835,13 +2927,11 @@
     };
 
     // timeout identifier, only used when timeout is defined
-    var timeoutId = null;
-    var timedOut = false;
     var aborted = false;
     var headersReceived = false;
 
     // set default options
-    options = _extends(
+    options = Object.assign(
       {
         method: 'POST',
         headers: {},
@@ -2850,9 +2940,12 @@
       options
     );
 
+    // encode url
+    url = encodeURI(url);
+
     // if method is GET, add any received data to url
-    if (/GET/i.test(options.method) && data) {
-      //url = `${ url }${ hasQueryString(url) ? '&' : '?' }data=${ encodeURIComponent(typeof data === 'string' ? data : JSON.stringify(data)) }`;
+
+    if (isGet(options.method) && data) {
       url =
         '' +
         url +
@@ -2865,13 +2958,10 @@
     var xhr = new XMLHttpRequest();
 
     // progress of load
-    var process = /GET/i.test(options.method) ? xhr : xhr.upload;
+    var process = isGet(options.method) ? xhr : xhr.upload;
     process.onprogress = function(e) {
-      // progress event received, timeout no longer needed
-      clearTimeout(timeoutId);
-
       // no progress event when aborted ( onprogress is called once after abort() )
-      if (aborted || timedOut) {
+      if (aborted) {
         return;
       }
 
@@ -2889,9 +2979,6 @@
       if (xhr.readyState === 4 && xhr.status === 0) {
         return;
       }
-
-      // timeout no longer needed as connection is setup
-      clearTimeout(timeoutId);
 
       if (headersReceived) {
         return;
@@ -2915,29 +3002,29 @@
 
     // error during load
     xhr.onerror = function() {
-      api.onerror(xhr);
+      return api.onerror(xhr);
     };
 
     // request aborted
     xhr.onabort = function() {
-      if (timedOut) {
-        return;
-      }
       aborted = true;
       api.onabort();
     };
 
-    // set timeout if defined
+    // request timeout
+    xhr.ontimeout = function() {
+      return api.ontimeout(xhr);
+    };
+
+    // open up open up!
+    xhr.open(options.method, url, true);
+
+    // set timeout if defined (do it after open so IE11 plays ball)
     if (isInt(options.timeout)) {
-      timeoutId = setTimeout(function() {
-        timedOut = true;
-        api.ontimeout(xhr);
-        api.abort();
-      }, options.timeout);
+      xhr.timeout = options.timeout;
     }
 
     // add headers
-    xhr.open(options.method, url, true);
     Object.keys(options.headers).forEach(function(key) {
       xhr.setRequestHeader(key, options.headers[key]);
     });
@@ -2956,6 +3043,15 @@
     xhr.send(data);
 
     return api;
+  };
+
+  var createResponse = function createResponse(type, code, body, headers) {
+    return {
+      type: type,
+      code: code,
+      body: body,
+      headers: headers
+    };
   };
 
   var createTimeoutResponse = function createTimeoutResponse(cb) {
@@ -2997,7 +3093,7 @@
       var request = sendRequest(
         url,
         apiUrl + action.url,
-        _extends({}, action, {
+        Object.assign({}, action, {
           responseType: 'blob'
         })
       );
@@ -3008,13 +3104,11 @@
 
         // get filename
         var filename =
-          getFilenameFromHeaders(headers) ||
-          getFilenameFromURL(url) ||
-          getDateString();
+          getFileInfoFromHeaders(headers).name || getFilenameFromURL(url);
 
         // create response
         load(
-          createResponse$1(
+          createResponse(
             'load',
             xhr.status,
             getFileFromBlob(onload(xhr.response), filename),
@@ -3025,7 +3119,7 @@
 
       request.onerror = function(xhr) {
         error(
-          createResponse$1(
+          createResponse(
             'error',
             xhr.status,
             onerror(xhr.response) || xhr.statusText,
@@ -3036,7 +3130,7 @@
 
       request.onheaders = function(xhr) {
         headers(
-          createResponse$1(
+          createResponse(
             'headers',
             xhr.status,
             null,
@@ -3090,21 +3184,12 @@ function signature:
 
     // internal handler
     return function(file, metadata, load, error, progress, abort) {
-      // no file received
-      if (!file) {
-        return;
-      }
-
-      // create formdata object
-      var formData = new FormData();
-      formData.append(name, file, file.name);
-
-      // add metadata under same name
-      if (isObject(metadata)) {
-        formData.append(name, JSON.stringify(metadata));
-      }
-
       // set onload hanlder
+      var ondata =
+        action.ondata ||
+        function(fd) {
+          return fd;
+        };
       var onload =
         action.onload ||
         function(res) {
@@ -3116,11 +3201,35 @@ function signature:
           return null;
         };
 
+      // no file received
+      if (!file) return;
+
+      // create formdata object
+      var formData = new FormData();
+
+      // add metadata under same name
+      if (isObject(metadata)) {
+        formData.append(name, JSON.stringify(metadata));
+      }
+
+      // Turn into an array of objects so no matter what the input, we can handle it the same way
+      (file instanceof Blob ? [{ name: null, file: file }] : file).forEach(
+        function(item) {
+          formData.append(
+            name,
+            item.file,
+            item.name === null
+              ? item.file.name
+              : '' + item.name + item.file.name
+          );
+        }
+      );
+
       // send request object
-      var request = sendRequest(formData, apiUrl + action.url, action);
+      var request = sendRequest(ondata(formData), apiUrl + action.url, action);
       request.onload = function(xhr) {
         load(
-          createResponse$1(
+          createResponse(
             'load',
             xhr.status,
             onload(xhr.response),
@@ -3131,7 +3240,7 @@ function signature:
 
       request.onerror = function(xhr) {
         error(
-          createResponse$1(
+          createResponse(
             'error',
             xhr.status,
             onerror(xhr.response) || xhr.statusText,
@@ -3191,7 +3300,7 @@ function signature:
       );
       request.onload = function(xhr) {
         load(
-          createResponse$1(
+          createResponse(
             'load',
             xhr.status,
             onload(xhr.response),
@@ -3202,7 +3311,7 @@ function signature:
 
       request.onerror = function(xhr) {
         error(
-          createResponse$1(
+          createResponse(
             'error',
             xhr.status,
             onerror(xhr.response) || xhr.statusText,
@@ -3295,7 +3404,7 @@ function signature:
       var completeFn = function completeFn() {
         state.complete = true;
 
-        api.fire('load', state.response.body);
+        api.fire('load-perceived', state.response.body);
       };
 
       // let's start processing
@@ -3342,21 +3451,23 @@ function signature:
         function(response) {
           // we put the response in state so we can access
           // it outside of this method
-          state.response =
-            typeof response === 'string'
-              ? {
-                  type: 'load',
-                  code: 200,
-                  body: response,
-                  headers: {}
-                }
-              : response;
+          state.response = isObject(response)
+            ? response
+            : {
+                type: 'load',
+                code: 200,
+                body: '' + response,
+                headers: {}
+              };
 
           // update duration
           state.duration = Date.now() - state.timestamp;
 
           // force progress to 1 as we're now done
           state.progress = 1;
+
+          // actual load is done let's share results
+          api.fire('load', state.response.body);
 
           // we are really done
           // if perceived progress is 1 ( wait for perceived progress to complete )
@@ -3374,13 +3485,13 @@ function signature:
           // update others about this error
           api.fire(
             'error',
-            typeof error === 'string'
-              ? {
+            isObject(error)
+              ? error
+              : {
                   type: 'error',
                   code: 0,
-                  body: error
+                  body: '' + error
                 }
-              : error
           );
         },
 
@@ -3401,7 +3512,7 @@ function signature:
           state.perceivedPerformanceUpdater.clear();
 
           // fire the abort event so we can switch visuals
-          api.fire('abort');
+          api.fire('abort', state.response ? state.response.body : null);
         }
       );
     };
@@ -3420,9 +3531,6 @@ function signature:
 
       // if has response object, we've completed the request
       state.complete = true;
-
-      // now aborted, if server returned a response, let's pass it along
-      api.fire('abort', state.response ? state.response.body : null);
     };
 
     var reset = function reset() {
@@ -3446,7 +3554,7 @@ function signature:
       return Math.min(state.duration, state.perceivedDuration);
     };
 
-    var api = _extends({}, on(), {
+    var api = Object.assign({}, on(), {
       process: process, // start processing file
       abort: abort, // abort active process request
       getProgress: getProgress,
@@ -3461,13 +3569,14 @@ function signature:
     return name.substr(0, name.lastIndexOf('.')) || name;
   };
 
-  var ItemStatus = {
+  var ItemStatus$1 = {
     INIT: 1,
     IDLE: 2,
+    PROCESSING_QUEUED: 9,
     PROCESSING: 3,
-    PROCESSING_PAUSED: 4,
     PROCESSING_COMPLETE: 5,
     PROCESSING_ERROR: 6,
+    PROCESSING_REVERT_ERROR: 10,
     LOADING: 7,
     LOAD_ERROR: 8
   };
@@ -3477,7 +3586,7 @@ function signature:
 
     // is blob or base64, then we need to set the name
     if (source instanceof Blob || isBase64DataURI(source)) {
-      data[0] = getDateString();
+      data[0] = source.name || getDateString();
     } else if (isBase64DataURI(source)) {
       // if is base64 data uri we need to determine the average size and type
       data[1] = source.length;
@@ -3496,10 +3605,21 @@ function signature:
     };
   };
 
-  var FileOrigin = {
+  var FileOrigin$1 = {
     INPUT: 1,
     LIMBO: 2,
     LOCAL: 3
+  };
+
+  var deepCloneObject = function deepCloneObject(src) {
+    if (!isObject(src)) return src;
+    var target = isArray(src) ? [] : {};
+    for (var key in src) {
+      if (!src.hasOwnProperty(key)) continue;
+      var v = src[key];
+      target[key] = v && isObject(v) ? deepCloneObject(v) : v;
+    }
+    return target;
   };
 
   var createItem = function createItem() {
@@ -3517,6 +3637,12 @@ function signature:
      * Internal item state
      */
     var state = {
+      // is archived
+      archived: false,
+
+      // removed from view
+      released: false,
+
       // original source
       source: null,
 
@@ -3528,13 +3654,16 @@ function signature:
 
       // current item status
       status: serverFileReference
-        ? ItemStatus.PROCESSING_COMPLETE
-        : ItemStatus.INIT,
+        ? ItemStatus$1.PROCESSING_COMPLETE
+        : ItemStatus$1.INIT,
 
       // active processes
       activeLoader: null,
       activeProcessor: null
     };
+
+    // callback used when abort processing is called to link back to the resolve method
+    var abortProcessingRequestComplete = null;
 
     /**
      * Externally added item metadata
@@ -3544,6 +3673,22 @@ function signature:
     // item data
     var setStatus = function setStatus(status) {
       return (state.status = status);
+    };
+
+    // fire event unless the item has been archived
+    var fire = function fire(event) {
+      for (
+        var _len = arguments.length,
+          params = Array(_len > 1 ? _len - 1 : 0),
+          _key = 1;
+        _key < _len;
+        _key++
+      ) {
+        params[_key - 1] = arguments[_key];
+      }
+
+      if (state.released) return;
+      api.fire.apply(api, [event].concat(params));
     };
 
     // file data
@@ -3560,14 +3705,16 @@ function signature:
       return state.file;
     };
 
-    // loads files
+    //
+    // logic to load a file
+    //
     var load = function load(source, loader, onload) {
       // remember the original item source
       state.source = source;
 
       // file stub is already there
       if (state.file) {
-        api.fire('load-skip');
+        fire('load-skip');
         return;
       }
 
@@ -3576,7 +3723,7 @@ function signature:
 
       // starts loading
       loader.on('init', function() {
-        api.fire('load-init');
+        fire('load-init');
       });
 
       // we'eve received a size indication, let's update the stub
@@ -3587,29 +3734,36 @@ function signature:
         // set name of file stub
         state.file.filename = meta.filename;
 
+        // if has received source, we done
+        if (meta.source) {
+          origin = FileOrigin$1.LIMBO;
+          state.serverFileReference = meta.source;
+          state.status = ItemStatus$1.PROCESSING_COMPLETE;
+        }
+
         // size has been updated
-        api.fire('load-meta');
+        fire('load-meta');
       });
 
       // the file is now loading we need to update the progress indicators
       loader.on('progress', function(progress) {
-        setStatus(ItemStatus.LOADING);
+        setStatus(ItemStatus$1.LOADING);
 
-        api.fire('load-progress', progress);
+        fire('load-progress', progress);
       });
 
       // an error was thrown while loading the file, we need to switch to error state
       loader.on('error', function(error) {
-        setStatus(ItemStatus.LOAD_ERROR);
+        setStatus(ItemStatus$1.LOAD_ERROR);
 
-        api.fire('load-request-error', error);
+        fire('load-request-error', error);
       });
 
       // user or another process aborted the file load (cannot retry)
       loader.on('abort', function() {
-        setStatus(ItemStatus.INIT);
+        setStatus(ItemStatus$1.INIT);
 
-        api.fire('load-abort');
+        fire('load-abort');
       });
 
       // done loading
@@ -3620,25 +3774,25 @@ function signature:
         // called when file has loaded succesfully
         var success = function success(result) {
           // set (possibly) transformed file
-          state.file = result;
+          state.file = result.size > 0 ? result : state.file;
 
           // file received
-          if (origin === FileOrigin.LIMBO && state.serverFileReference) {
-            setStatus(ItemStatus.PROCESSING_COMPLETE);
+          if (origin === FileOrigin$1.LIMBO && state.serverFileReference) {
+            setStatus(ItemStatus$1.PROCESSING_COMPLETE);
           } else {
-            setStatus(ItemStatus.IDLE);
+            setStatus(ItemStatus$1.IDLE);
           }
 
-          api.fire('load');
+          fire('load');
         };
 
         var error = function error(result) {
           // set original file
           state.file = file;
-          api.fire('load-meta');
+          fire('load-meta');
 
-          setStatus(ItemStatus.LOAD_ERROR);
-          api.fire('load-file-error', result);
+          setStatus(ItemStatus$1.LOAD_ERROR);
+          fire('load-file-error', result);
         };
 
         // if we already have a server file reference, we don't need to call the onload method
@@ -3661,8 +3815,30 @@ function signature:
       loader.load();
     };
 
-    // file processor
+    var retryLoad = function retryLoad() {
+      if (!state.activeLoader) {
+        return;
+      }
+      state.activeLoader.load();
+    };
+
+    var abortLoad = function abortLoad() {
+      if (!state.activeLoader) {
+        return;
+      }
+      state.activeLoader.abort();
+    };
+
+    //
+    // logic to process a file
+    //
     var process = function process(processor, onprocess) {
+      // now processing
+      setStatus(ItemStatus$1.PROCESSING);
+
+      // reset abort callback
+      abortProcessingRequestComplete = null;
+
       // if no file loaded we'll wait for the load event
       if (!(state.file instanceof Blob)) {
         api.on('load', function() {
@@ -3672,26 +3848,30 @@ function signature:
       }
 
       // setup processor
-
       processor.on('load', function(serverFileReference) {
+        // need this id to be able to revert the upload
+        state.serverFileReference = serverFileReference;
+      });
+
+      processor.on('load-perceived', function(serverFileReference) {
         // no longer required
         state.activeProcessor = null;
 
         // need this id to be able to rever the upload
         state.serverFileReference = serverFileReference;
 
-        setStatus(ItemStatus.PROCESSING_COMPLETE);
-        api.fire('process-complete', serverFileReference);
+        setStatus(ItemStatus$1.PROCESSING_COMPLETE);
+        fire('process-complete', serverFileReference);
       });
 
       processor.on('start', function() {
-        api.fire('process-start');
+        fire('process-start');
       });
 
       processor.on('error', function(error) {
         state.activeProcessor = null;
-        setStatus(ItemStatus.PROCESSING_ERROR);
-        api.fire('process-error', error);
+        setStatus(ItemStatus$1.PROCESSING_ERROR);
+        fire('process-error', error);
       });
 
       processor.on('abort', function(serverFileReference) {
@@ -3700,18 +3880,26 @@ function signature:
         // if file was uploaded but processing was cancelled during perceived processor time store file reference
         state.serverFileReference = serverFileReference;
 
-        setStatus(ItemStatus.IDLE);
-        api.fire('process-abort');
+        setStatus(ItemStatus$1.IDLE);
+        fire('process-abort');
+
+        // has timeout so doesn't interfere with remove action
+        if (abortProcessingRequestComplete) {
+          abortProcessingRequestComplete();
+        }
       });
 
       processor.on('progress', function(progress) {
-        setStatus(ItemStatus.PROCESSING);
-        api.fire('process-progress', progress);
+        fire('process-progress', progress);
       });
 
       // when successfully transformed
       var success = function success(file) {
-        processor.process(file, _extends({}, metadata));
+        // if was archived in the mean time, don't process
+        if (state.archived) return;
+
+        // process file!
+        processor.process(file, Object.assign({}, metadata));
       };
 
       // something went wrong during transform phase
@@ -3724,81 +3912,126 @@ function signature:
       state.activeProcessor = processor;
     };
 
-    var revert = function revert(revertFileUpload) {
-      // cannot revert without a server id for this process
-      if (state.serverFileReference === null) {
-        return;
-      }
-
-      // revert the upload (fire and forget)
-      revertFileUpload(
-        state.serverFileReference,
-        function() {
-          // reset file server id as now it's no available on the server
-          state.serverFileReference = null;
-        },
-        function(error) {
-          // TODO: handle revert error
-        }
-      );
-
-      // fire event
-      setStatus(ItemStatus.IDLE);
-      api.fire('process-revert');
-    };
-
-    var abortLoad = function abortLoad() {
-      if (!state.activeLoader) {
-        return;
-      }
-      state.activeLoader.abort();
-    };
-
-    var retryLoad = function retryLoad() {
-      if (!state.activeLoader) {
-        return;
-      }
-      state.activeLoader.load();
+    var requestProcessing = function requestProcessing() {
+      setStatus(ItemStatus$1.PROCESSING_QUEUED);
     };
 
     var abortProcessing = function abortProcessing() {
-      if (!state.activeProcessor) {
-        return;
-      }
-      state.activeProcessor.abort();
+      return new Promise(function(resolve) {
+        if (!state.activeProcessor) {
+          setStatus(ItemStatus$1.IDLE);
+          fire('process-abort');
+
+          resolve();
+          return;
+        }
+
+        abortProcessingRequestComplete = function abortProcessingRequestComplete() {
+          resolve();
+        };
+
+        state.activeProcessor.abort();
+      });
+    };
+
+    //
+    // logic to revert a processed file
+    //
+    var revert = function revert(revertFileUpload, forceRevert) {
+      return new Promise(function(resolve, reject) {
+        // cannot revert without a server id for this process
+        if (state.serverFileReference === null) {
+          resolve();
+          return;
+        }
+
+        // revert the upload (fire and forget)
+        revertFileUpload(
+          state.serverFileReference,
+          function() {
+            // reset file server id as now it's no available on the server
+            state.serverFileReference = null;
+            resolve();
+          },
+          function(error) {
+            // don't set error state when reverting is optional, it will always resolve
+            if (!forceRevert) {
+              resolve();
+              return;
+            }
+
+            // oh no errors
+            setStatus(ItemStatus$1.PROCESSING_REVERT_ERROR);
+            fire('process-revert-error');
+            reject(error);
+          }
+        );
+
+        // fire event
+        setStatus(ItemStatus$1.IDLE);
+        fire('process-revert');
+      });
     };
 
     // exposed methods
+    var _setMetadata = function _setMetadata(key, value, silent) {
+      var keys = key.split('.');
+      var root = keys[0];
+      var last = keys.pop();
+      var data = metadata;
+      keys.forEach(function(key) {
+        return (data = data[key]);
+      });
 
-    var api = _extends(
+      // compare old value against new value, if they're the same, we're not updating
+      if (JSON.stringify(data[last]) === JSON.stringify(value)) {
+        return;
+      }
+
+      // update value
+      data[last] = value;
+
+      if (silent) return;
+
+      fire('metadata-update', {
+        key: root,
+        value: metadata[root]
+      });
+    };
+
+    var getMetadata = function getMetadata(key) {
+      return deepCloneObject(key ? metadata[key] : metadata);
+    };
+
+    var api = Object.assign(
       {
         id: {
-          get: function get$$1() {
+          get: function get() {
             return id;
           }
         },
         origin: {
-          get: function get$$1() {
+          get: function get() {
             return origin;
           }
         },
         serverId: {
-          get: function get$$1() {
+          get: function get() {
             return state.serverFileReference;
           }
         },
         status: {
-          get: function get$$1() {
+          get: function get() {
             return state.status;
           }
         },
         filename: {
-          get: function get$$1() {
+          get: function get() {
             return state.file.name;
           }
         },
         filenameWithoutExtension: {
-          get: function get$$1() {
+          get: function get() {
             return getFilenameWithoutExtension(state.file.name);
           }
         },
@@ -3808,30 +4041,63 @@ function signature:
         file: { get: getFile },
 
         source: {
-          get: function get$$1() {
+          get: function get() {
             return state.source;
           }
         },
 
-        getMetadata: function getMetadata(name) {
-          return name ? metadata[name] : _extends({}, metadata);
+        getMetadata: getMetadata,
+        setMetadata: function setMetadata(key, value, silent) {
+          if (isObject(key)) {
+            var data = key;
+            Object.keys(data).forEach(function(key) {
+              _setMetadata(key, data[key], value);
+            });
+            return key;
+          }
+          _setMetadata(key, value, silent);
+          return value;
         },
-        setMetadata: function setMetadata(name, value) {
-          return (metadata[name] = value);
+
+        extend: function extend(name, handler) {
+          return (itemAPI[name] = handler);
         },
 
         abortLoad: abortLoad,
         retryLoad: retryLoad,
+        requestProcessing: requestProcessing,
         abortProcessing: abortProcessing,
 
         load: load,
         process: process,
         revert: revert
       },
-      on()
+      on(),
+      {
+        release: function release() {
+          return (state.released = true);
+        },
+        released: {
+          get: function get() {
+            return state.released;
+          }
+        },
+
+        archive: function archive() {
+          return (state.archived = true);
+        },
+        archived: {
+          get: function get() {
+            return state.archived;
+          }
+        }
+      }
     );
 
-    return createObject(api);
+    // create it here instead of returning it instantly so we can extend it later
+    var itemAPI = createObject(api);
+
+    return itemAPI;
   };
 
   var getItemIndexByQuery = function getItemIndexByQuery(items, query) {
@@ -3859,23 +4125,6 @@ function signature:
     return items[index] || null;
   };
 
-  var removeIndex = function removeIndex(arr, index) {
-    return arr.splice(index, 1);
-  };
-
-  var removeItem = function removeItem(items, needle) {
-    // get index of item
-    var index = items.findIndex(function(item) {
-      return item === needle;
-    });
-
-    // remove it from array
-    removeIndex(items, index);
-
-    // return removed item
-    return needle;
-  };
-
   var fetchLocal = function fetchLocal(
     url,
     load,
@@ -3895,13 +4144,11 @@ function signature:
 
       // get filename
       var filename =
-        getFilenameFromHeaders(headers) ||
-        getFilenameFromURL(url) ||
-        getDateString();
+        getFileInfoFromHeaders(headers).name || getFilenameFromURL(url);
 
       // create response
       load(
-        createResponse$1(
+        createResponse(
           'load',
           xhr.status,
           getFileFromBlob(xhr.response, filename),
@@ -3912,7 +4159,7 @@ function signature:
 
     request.onerror = function(xhr) {
       error(
-        createResponse$1(
+        createResponse(
           'error',
           xhr.status,
           xhr.statusText,
@@ -3923,12 +4170,7 @@ function signature:
 
     request.onheaders = function(xhr) {
       headers(
-        createResponse$1(
-          'headers',
-          xhr.status,
-          null,
-          xhr.getAllResponseHeaders()
-        )
+        createResponse('headers', xhr.status, null, xhr.getAllResponseHeaders())
       );
     };
 
@@ -3946,6 +4188,7 @@ function signature:
     }
     return url
       .toLowerCase()
+      .replace('blob:', '')
       .replace(/([a-z])?:\/\//, '$1')
       .split('/')[0];
   };
@@ -3955,6 +4198,65 @@ function signature:
       (url.indexOf(':') > -1 || url.indexOf('//') > -1) &&
       getDomainFromURL(location.href) !== getDomainFromURL(url)
     );
+  };
+
+  var isFile = function isFile(value) {
+    return value instanceof File || (value instanceof Blob && value.name);
+  };
+
+  var dynamicLabel = function dynamicLabel(label) {
+    return function() {
+      return isFunction(label) ? label.apply(undefined, arguments) : label;
+    };
+  };
+
+  var isMockItem = function isMockItem(item) {
+    return !isFile(item.file);
+  };
+
+  var listUpdated = function listUpdated(dispatch, state) {
+    clearTimeout(state.listUpdateTimeout);
+    state.listUpdateTimeout = setTimeout(function() {
+      dispatch('DID_UPDATE_ITEMS', { items: getActiveItems(state.items) });
+    }, 0);
+  };
+
+  var optionalPromise = function optionalPromise(fn) {
+    for (
+      var _len = arguments.length,
+        params = Array(_len > 1 ? _len - 1 : 0),
+        _key = 1;
+      _key < _len;
+      _key++
+    ) {
+      params[_key - 1] = arguments[_key];
+    }
+
+    return new Promise(function(resolve) {
+      if (!fn) {
+        return resolve(true);
+      }
+
+      var result = fn.apply(undefined, params);
+
+      if (result == null) {
+        return resolve(true);
+      }
+
+      if (typeof result === 'boolean') {
+        return resolve(result);
+      }
+
+      if (typeof result.then === 'function') {
+        result.then(resolve);
+      }
+    });
+  };
+
+  var sortItems = function sortItems(state, compare) {
+    state.items.sort(function(a, b) {
+      return compare(createItemAPI(a), createItemAPI(b));
+    });
   };
 
   // returns item based on state
@@ -3976,7 +4278,7 @@ function signature:
       var item = getItemByQuery(state.items, query);
       if (!item) {
         failure({
-          error: createResponse$1('error', 0, 'Item not found'),
+          error: createResponse('error', 0, 'Item not found'),
           file: null
         });
         return;
@@ -3991,7 +4293,7 @@ function signature:
        * Aborts all ongoing processes
        */
       ABORT_ALL: function ABORT_ALL() {
-        query('GET_ITEMS').forEach(function(item) {
+        getActiveItems(state.items).forEach(function(item) {
           item.abortLoad();
           item.abortProcessing();
         });
@@ -4013,13 +4315,14 @@ function signature:
         });
 
         // loop over files, if file is in list, leave it be, if not, remove
-
         // test if items should be moved
-        [].concat(toConsumableArray(state.items)).forEach(function(item) {
+        var activeItems = getActiveItems(state.items);
+
+        activeItems.forEach(function(item) {
           // if item not is in new value, remove
           if (
             !files.find(function(file) {
-              return file.source === item.source;
+              return file.source === item.source || file.source === item.file;
             })
           ) {
             dispatch('REMOVE_ITEM', { query: item });
@@ -4027,20 +4330,20 @@ function signature:
         });
 
         // add new files
+        activeItems = getActiveItems(state.items);
         files.forEach(function(file, index) {
           // if file is already in list
           if (
-            [].concat(toConsumableArray(state.items)).find(function(item) {
-              return item.source === file.source;
+            activeItems.find(function(item) {
+              return item.source === file.source || item.file === file.source;
             })
-          ) {
+          )
             return;
-          }
 
           // not in list, add
           dispatch(
             'ADD_ITEM',
-            _extends({}, file, {
+            Object.assign({}, file, {
               interactionMethod: InteractionMethod.NONE,
               index: index
             })
@@ -4048,37 +4351,158 @@ function signature:
         });
       },
 
+      DID_UPDATE_ITEM_METADATA: function DID_UPDATE_ITEM_METADATA(_ref3) {
+        var id = _ref3.id;
+
+        var item = getItemById(state.items, id);
+
+        // only revert and attempt to upload when we're uploading to a server
+        if (!query('IS_ASYNC')) {
+          // should we update the output data
+          applyFilterChain('SHOULD_PREPARE_OUTPUT', false, {
+            item: item,
+            query: query
+          }).then(function(shouldPrepareOutput) {
+            if (!shouldPrepareOutput) {
+              return;
+            }
+            dispatch(
+              'REQUEST_PREPARE_OUTPUT',
+              {
+                query: id,
+                item: item,
+                ready: function ready(file) {
+                  dispatch('DID_PREPARE_OUTPUT', { id: id, file: file });
+                }
+              },
+              true
+            );
+          });
+
+          return;
+        }
+
+        // for async scenarios
+        var upload = function upload() {
+          // we push this forward a bit so the interface is updated correctly
+          setTimeout(function() {
+            dispatch('REQUEST_ITEM_PROCESSING', { query: id });
+          }, 32);
+        };
+
+        var revert = function revert(doUpload) {
+          item
+            .revert(
+              createRevertFunction(
+                state.options.server.url,
+                state.options.server.revert
+              ),
+              query('GET_FORCE_REVERT')
+            )
+            .then(doUpload ? upload : function() {})
+            .catch(function() {});
+        };
+
+        var abort = function abort(doUpload) {
+          item.abortProcessing().then(doUpload ? upload : function() {});
+        };
+
+        // if we should re-upload the file immidiately
+        if (item.status === ItemStatus$1.PROCESSING_COMPLETE) {
+          return revert(state.options.instantUpload);
+        }
+
+        // if currently uploading, cancel upload
+        if (item.status === ItemStatus$1.PROCESSING) {
+          return abort(state.options.instantUpload);
+        }
+
+        if (state.options.instantUpload) {
+          upload();
+        }
+      },
+
+      SORT: function SORT(_ref4) {
+        var compare = _ref4.compare;
+
+        sortItems(state, compare);
+      },
+
+      ADD_ITEMS: function ADD_ITEMS(_ref5) {
+        var items = _ref5.items,
+          index = _ref5.index,
+          interactionMethod = _ref5.interactionMethod,
+          _ref5$success = _ref5.success,
+          success = _ref5$success === undefined ? function() {} : _ref5$success,
+          _ref5$failure = _ref5.failure,
+          failure = _ref5$failure === undefined ? function() {} : _ref5$failure;
+
+        var currentIndex = index;
+
+        if (index === -1 || typeof index === 'undefined') {
+          var insertLocation = query('GET_ITEM_INSERT_LOCATION');
+          var totalItems = query('GET_TOTAL_ITEMS');
+          currentIndex = insertLocation === 'before' ? 0 : totalItems;
+        }
+
+        var ignoredFiles = query('GET_IGNORED_FILES');
+        var isValidFile = function isValidFile(source) {
+          return isFile(source)
+            ? !ignoredFiles.includes(source.name.toLowerCase())
+            : !isEmpty(source);
+        };
+        var validItems = items.filter(isValidFile);
+
+        var promises = validItems.map(function(source) {
+          return new Promise(function(resolve, reject) {
+            dispatch('ADD_ITEM', {
+              interactionMethod: interactionMethod,
+              source: source,
+              success: resolve,
+              failure: reject,
+              index: currentIndex++
+            });
+          });
+        });
+
+        Promise.all(promises)
+          .then(success)
+          .catch(failure);
+      },
+
       /**
        * @param source
        * @param index
        * @param interactionMethod
        */
-      ADD_ITEM: function ADD_ITEM(_ref3) {
-        var source = _ref3.source,
-          index = _ref3.index,
-          interactionMethod = _ref3.interactionMethod,
-          _ref3$success = _ref3.success,
-          success = _ref3$success === undefined ? function() {} : _ref3$success,
-          _ref3$failure = _ref3.failure,
-          failure = _ref3$failure === undefined ? function() {} : _ref3$failure,
-          _ref3$options = _ref3.options,
-          options = _ref3$options === undefined ? {} : _ref3$options;
+      ADD_ITEM: function ADD_ITEM(_ref6) {
+        var source = _ref6.source,
+          _ref6$index = _ref6.index,
+          index = _ref6$index === undefined ? -1 : _ref6$index,
+          interactionMethod = _ref6.interactionMethod,
+          _ref6$success = _ref6.success,
+          success = _ref6$success === undefined ? function() {} : _ref6$success,
+          _ref6$failure = _ref6.failure,
+          failure = _ref6$failure === undefined ? function() {} : _ref6$failure,
+          _ref6$options = _ref6.options,
+          options = _ref6$options === undefined ? {} : _ref6$options;
 
         // if no source supplied
         if (isEmpty(source)) {
           failure({
-            error: createResponse$1('error', 0, 'No source'),
+            error: createResponse('error', 0, 'No source'),
             file: null
           });
           return;
         }
 
         // filter out invalid file items, used to filter dropped directory contents
-        if (source instanceof Blob) {
-          if (state.options.ignoredFiles.includes(source.name.toLowerCase())) {
-            // fail silently
-            return;
-          }
+        if (
+          isFile(source) &&
+          state.options.ignoredFiles.includes(source.name.toLowerCase())
+        ) {
+          // fail silently
+          return;
         }
 
         // test if there's still room in the list of files
@@ -4089,7 +4513,7 @@ function signature:
             state.options.allowMultiple ||
             (!state.options.allowMultiple && !state.options.allowReplace)
           ) {
-            var error = createResponse$1('warning', 0, 'Max files');
+            var error = createResponse('warning', 0, 'Max files');
 
             dispatch('DID_THROW_MAX_FILES', {
               source: source,
@@ -4097,15 +4521,44 @@ function signature:
             });
 
             failure({ error: error, file: null });
+
             return;
           }
 
+          // let's replace the item
           // id of first item we're about to remove
-          var _item = state.items[0];
+          var _item = getActiveItems(state.items)[0];
 
           // if has been processed remove it from the server as well
-          if (_item.status === ItemStatus.PROCESSING_COMPLETE) {
-            dispatch('REVERT_ITEM_PROCESSING', { query: _item.id });
+          if (
+            _item.status === ItemStatus$1.PROCESSING_COMPLETE ||
+            _item.status === ItemStatus$1.PROCESSING_REVERT_ERROR
+          ) {
+            var forceRevert = query('GET_FORCE_REVERT');
+            _item
+              .revert(
+                createRevertFunction(
+                  state.options.server.url,
+                  state.options.server.revert
+                ),
+                forceRevert
+              )
+              .then(function() {
+                if (!forceRevert) return;
+
+                // try to add now
+                dispatch('ADD_ITEM', {
+                  source: source,
+                  index: index,
+                  interactionMethod: interactionMethod,
+                  success: success,
+                  failure: failure,
+                  options: options
+                });
+              })
+              .catch(function() {}); // no need to handle this catch state for now
+
+            if (forceRevert) return;
           }
 
           // remove first item as it will be replaced by this item
@@ -4115,13 +4568,20 @@ function signature:
         // where did the file originate
         var origin =
           options.type === 'local'
-            ? FileOrigin.LOCAL
-            : options.type === 'limbo' ? FileOrigin.LIMBO : FileOrigin.INPUT;
+            ? FileOrigin$1.LOCAL
+            : options.type === 'limbo'
+              ? FileOrigin$1.LIMBO
+              : FileOrigin$1.INPUT;
 
         // create a new blank item
         var item = createItem(
+          // where did this file come from
           origin,
-          origin === FileOrigin.INPUT ? null : source,
+
+          // an input file never has a server file reference
+          origin === FileOrigin$1.INPUT ? null : source,
+
+          // file mock data, if defined
           options.file
         );
 
@@ -4130,8 +4590,20 @@ function signature:
           item.setMetadata(key, options.metadata[key]);
         });
 
+        // created the item, let plugins add methods
+        applyFilters('DID_CREATE_ITEM', item, {
+          query: query,
+          dispatch: dispatch
+        });
+
         // add item to list
         insertItem(state.items, item, index);
+
+        // sort items in list
+        var itemInsertLocation = query('GET_ITEM_INSERT_LOCATION');
+        if (isFunction(itemInsertLocation) && source) {
+          sortItems(state, itemInsertLocation);
+        }
 
         // get a quick reference to the item id
         var id = item.id;
@@ -4153,13 +4625,17 @@ function signature:
         });
 
         item.on('load-request-error', function(error) {
+          var mainStatus = dynamicLabel(state.options.labelFileLoadError)(
+            error
+          );
+
           // is client error, no way to recover
           if (error.code >= 400 && error.code < 500) {
             dispatch('DID_THROW_ITEM_INVALID', {
               id: id,
               error: error,
               status: {
-                main: state.options.labelFileLoadError,
+                main: mainStatus,
                 sub: error.code + ' (' + error.body + ')'
               }
             });
@@ -4174,14 +4650,17 @@ function signature:
             id: id,
             error: error,
             status: {
-              main: state.options.labelFileLoadError,
+              main: mainStatus,
               sub: state.options.labelTapToRetry
             }
           });
         });
 
         item.on('load-file-error', function(error) {
-          dispatch('DID_THROW_ITEM_INVALID', _extends({}, error, { id: id }));
+          dispatch(
+            'DID_THROW_ITEM_INVALID',
+            Object.assign({}, error, { id: id })
+          );
         });
 
         item.on('load-abort', function() {
@@ -4200,46 +4679,78 @@ function signature:
         });
 
         item.on('load', function() {
-          // item loaded, allow plugins to
-          // - read data (quickly)
-          // - add metadata
-          applyFilterChain('DID_LOAD_ITEM', item, { query: query }).then(
-            function() {
-              // let plugins decide if the output data should be prepared at this point
-              // means we'll do this and wait for idle state
-              applyFilterChain('SHOULD_PREPARE_OUTPUT', false, {
-                item: item,
-                query: query
-              }).then(function(shouldPrepareOutput) {
-                var data = {
-                  source: source,
-                  success: success
+          var handleAdd = function handleAdd(shouldAdd) {
+            // no should not add this file
+            if (!shouldAdd) {
+              dispatch('REMOVE_ITEM', {
+                query: id
+              });
+              return;
+            }
 
-                  // exit
-                };
-                if (shouldPrepareOutput) {
-                  // wait for idle state and then run PREPARE_OUTPUT
-                  dispatch(
-                    'REQUEST_PREPARE_LOAD_ITEM',
-                    {
-                      query: id,
-                      item: item,
-                      data: data
-                    },
-                    true
-                  );
+            // now interested in metadata updates
+            item.on('metadata-update', function(change) {
+              dispatch('DID_UPDATE_ITEM_METADATA', { id: id, change: change });
+            });
 
-                  return;
-                }
-
+            // let plugins decide if the output data should be prepared at this point
+            // means we'll do this and wait for idle state
+            applyFilterChain('SHOULD_PREPARE_OUTPUT', false, {
+              item: item,
+              query: query
+            }).then(function(shouldPrepareOutput) {
+              var loadComplete = function loadComplete() {
                 dispatch('COMPLETE_LOAD_ITEM', {
                   query: id,
                   item: item,
-                  data: data
+                  data: {
+                    source: source,
+                    success: success
+                  }
                 });
-              });
-            }
-          );
+
+                listUpdated(dispatch, state);
+              };
+
+              // exit
+              if (shouldPrepareOutput) {
+                // wait for idle state and then run PREPARE_OUTPUT
+                dispatch(
+                  'REQUEST_PREPARE_OUTPUT',
+                  {
+                    query: id,
+                    item: item,
+                    ready: function ready(file) {
+                      dispatch('DID_PREPARE_OUTPUT', { id: id, file: file });
+                      loadComplete();
+                    }
+                  },
+                  true
+                );
+
+                return;
+              }
+
+              loadComplete();
+            });
+          };
+
+          // item loaded, allow plugins to
+          // - read data (quickly)
+          // - add metadata
+          applyFilterChain('DID_LOAD_ITEM', item, {
+            query: query,
+            dispatch: dispatch
+          })
+            .then(function() {
+              optionalPromise(
+                query('GET_BEFORE_ADD_FILE'),
+                createItemAPI(item)
+              ).then(handleAdd);
+            })
+            .catch(function() {
+              handleAdd(false);
+            });
         });
 
         item.on('process-start', function() {
@@ -4258,23 +4769,23 @@ function signature:
             id: id,
             error: error,
             status: {
-              main: state.options.labelFileProcessingError,
+              main: dynamicLabel(state.options.labelFileProcessingError)(error),
               sub: state.options.labelTapToRetry
             }
           });
         });
 
-        item.on('process-abort', function(serverFileReference) {
-          // we'll revert any processed items
-          dispatch('REVERT_ITEM_PROCESSING', { query: id });
-
-          // if we're instant uploading, the item is removed
-          if (state.options.instantUpload) {
-            dispatch('REMOVE_ITEM', { query: id });
-          } else {
-            // we stopped processing
-            dispatch('DID_ABORT_ITEM_PROCESSING', { id: id });
-          }
+        item.on('process-revert-error', function(error) {
+          dispatch('DID_THROW_ITEM_PROCESSING_REVERT_ERROR', {
+            id: id,
+            error: error,
+            status: {
+              main: dynamicLabel(state.options.labelFileProcessingRevertError)(
+                error
+              ),
+              sub: state.options.labelTapToRetry
+            }
+          });
         });
 
         item.on('process-complete', function(serverFileReference) {
@@ -4285,14 +4796,12 @@ function signature:
           });
         });
 
+        item.on('process-abort', function() {
+          dispatch('DID_ABORT_ITEM_PROCESSING', { id: id });
+        });
+
         item.on('process-revert', function() {
-          // if is instant upload remove the item
-          // or is a fake file
-          if (state.options.instantUpload || options.file) {
-            dispatch('REMOVE_ITEM', { query: id });
-          } else {
-            dispatch('DID_REVERT_ITEM_PROCESSING', { id: id });
-          }
+          dispatch('DID_REVERT_ITEM_PROCESSING', { id: id });
         });
 
         // let view know the item has been inserted
@@ -4302,26 +4811,28 @@ function signature:
           interactionMethod: interactionMethod
         });
 
+        listUpdated(dispatch, state);
+
         // start loading the source
 
-        var _ref4 = state.options.server || {},
-          url = _ref4.url,
-          load = _ref4.load,
-          restore = _ref4.restore,
-          fetch = _ref4.fetch;
+        var _ref7 = state.options.server || {},
+          url = _ref7.url,
+          load = _ref7.load,
+          restore = _ref7.restore,
+          fetch = _ref7.fetch;
 
         item.load(
           source,
 
           // this creates a function that loads the file based on the type of file (string, base64, blob, file) and location of file (local, remote, limbo)
           createFileLoader(
-            origin === FileOrigin.INPUT
+            origin === FileOrigin$1.INPUT
               ? // input
                 isString(source) && isExternalURL(source)
                 ? createFetchFunction(url, fetch) // remote url
                 : fetchLocal // local url
               : // limbo or local
-                origin === FileOrigin.LIMBO
+                origin === FileOrigin$1.LIMBO
                 ? createFetchFunction(url, restore) // limbo
                 : createFetchFunction(url, load) // local
           ),
@@ -4336,9 +4847,9 @@ function signature:
         );
       },
 
-      REQUEST_PREPARE_LOAD_ITEM: function REQUEST_PREPARE_LOAD_ITEM(_ref5) {
-        var item = _ref5.item,
-          data = _ref5.data;
+      REQUEST_PREPARE_OUTPUT: function REQUEST_PREPARE_OUTPUT(_ref8) {
+        var item = _ref8.item,
+          ready = _ref8.ready;
 
         // allow plugins to alter the file data
         applyFilterChain('PREPARE_OUTPUT', item.file, {
@@ -4349,26 +4860,30 @@ function signature:
             query: query,
             item: item
           }).then(function(result) {
-            dispatch('COMPLETE_LOAD_ITEM', {
-              item: item,
-              data: data
-            });
+            ready(result);
           });
         });
       },
 
-      COMPLETE_LOAD_ITEM: function COMPLETE_LOAD_ITEM(_ref6) {
-        var item = _ref6.item,
-          data = _ref6.data;
+      COMPLETE_LOAD_ITEM: function COMPLETE_LOAD_ITEM(_ref9) {
+        var item = _ref9.item,
+          data = _ref9.data;
         var success = data.success,
           source = data.source;
 
-        // let interface know the item has loaded
+        // sort items in list
 
+        var itemInsertLocation = query('GET_ITEM_INSERT_LOCATION');
+        if (isFunction(itemInsertLocation) && source) {
+          sortItems(state, itemInsertLocation);
+        }
+
+        // let interface know the item has loaded
         dispatch('DID_LOAD_ITEM', {
           id: item.id,
           error: null,
-          serverFileReference: item.origin === FileOrigin.INPUT ? null : source
+          serverFileReference:
+            item.origin === FileOrigin$1.INPUT ? null : source
         });
 
         // item has been successfully loaded and added to the
@@ -4376,13 +4891,13 @@ function signature:
         success(createItemAPI(item));
 
         // if this is a local server file we need to show a different state
-        if (item.origin === FileOrigin.LOCAL) {
+        if (item.origin === FileOrigin$1.LOCAL) {
           dispatch('DID_LOAD_LOCAL_ITEM', { id: item.id });
           return;
         }
 
         // if is a temp server file we prevent async upload call here (as the file is already on the server)
-        if (item.origin === FileOrigin.LIMBO) {
+        if (item.origin === FileOrigin$1.LIMBO) {
           dispatch('DID_COMPLETE_ITEM_PROCESSING', {
             id: item.id,
             error: null,
@@ -4402,12 +4917,64 @@ function signature:
         item.retryLoad();
       }),
 
-      REQUEST_ITEM_PROCESSING: getItemByQueryFromState(state, function(item) {
-        var id = item.id;
+      REQUEST_ITEM_PROCESSING: getItemByQueryFromState(state, function(
+        item,
+        success,
+        failure
+      ) {
+        // cannot be queued (or is already queued)
+        var itemCanBeQueuedForProcessing =
+          // waiting for something
+          item.status === ItemStatus$1.IDLE ||
+          // processing went wrong earlier
+          item.status === ItemStatus$1.PROCESSING_ERROR;
 
-        dispatch('DID_REQUEST_ITEM_PROCESSING', { id: id });
+        // not ready to be processed
+        if (!itemCanBeQueuedForProcessing) {
+          var process = function process() {
+            setTimeout(function() {
+              dispatch('REQUEST_ITEM_PROCESSING', {
+                query: item,
+                success: success,
+                failure: failure
+              });
+            }, 32);
+          };
 
-        dispatch('PROCESS_ITEM', { query: item }, true);
+          // if already done processing or tried to revert but didn't work, try again
+          if (
+            item.status === ItemStatus$1.PROCESSING_COMPLETE ||
+            item.status === ItemStatus$1.PROCESSING_REVERT_ERROR
+          ) {
+            item
+              .revert(
+                createRevertFunction(
+                  state.options.server.url,
+                  state.options.server.revert
+                ),
+                query('GET_FORCE_REVERT')
+              )
+              .then(process)
+              .catch(function() {}); // don't continue with processing if something went wrong
+          } else if (item.status === ItemStatus$1.PROCESSING) {
+            item.abortProcessing().then(process);
+          }
+
+          return;
+        }
+
+        // already queued for processing
+        if (item.status === ItemStatus$1.PROCESSING_QUEUED) return;
+
+        item.requestProcessing();
+
+        dispatch('DID_REQUEST_ITEM_PROCESSING', { id: item.id });
+
+        dispatch(
+          'PROCESS_ITEM',
+          { query: item, success: success, failure: failure },
+          true
+        );
       }),
 
       PROCESS_ITEM: getItemByQueryFromState(state, function(
@@ -4415,9 +4982,45 @@ function signature:
         success,
         failure
       ) {
+        var maxParallelUploads = query('GET_MAX_PARALLEL_UPLOADS');
+        var totalCurrentUploads = query(
+          'GET_ITEMS_BY_STATUS',
+          ItemStatus$1.PROCESSING
+        ).length;
+
+        // queue and wait till queue is freed up
+        if (totalCurrentUploads === maxParallelUploads) {
+          // queue for later processing
+          state.processingQueue.push({
+            item: item,
+            success: success,
+            failure: failure
+          });
+
+          // stop it!
+          return;
+        }
+
+        // if was not queued or is already processing exit here
+        if (item.status === ItemStatus$1.PROCESSING) return;
+
         // we done function
         item.onOnce('process-complete', function() {
+          // done!
           success(createItemAPI(item));
+
+          // process queueud items
+          var queued = state.processingQueue.shift();
+          if (!queued) return;
+          dispatch(
+            'PROCESS_ITEM',
+            {
+              query: queued.item,
+              success: queued.success,
+              failure: queued.failure
+            },
+            true
+          );
         });
 
         // we error function
@@ -4441,7 +5044,11 @@ function signature:
               query: query,
               item: item
             })
-              .then(success)
+              .then(function(file) {
+                dispatch('DID_PREPARE_OUTPUT', { id: item.id, file: file });
+
+                success(file);
+              })
               .catch(error);
           }
         );
@@ -4451,56 +5058,148 @@ function signature:
         dispatch('REQUEST_ITEM_PROCESSING', { query: item });
       }),
 
-      REMOVE_ITEM: getItemByQueryFromState(state, function(item, success) {
-        // get id reference
-        var id = item.id;
-
-        // tell the view the item has been removed
-        dispatch('DID_REMOVE_ITEM', { id: id, item: item });
-
-        // now remove it from the item list,
-        // we remove it from the list after the view has been updated
-        // to make sure the item is available for view rendering till removed
-        dispatch('SPLICE_ITEM', { id: id, item: item });
-
-        // correctly removed
-        success(createItemAPI(item));
+      REQUEST_REMOVE_ITEM: getItemByQueryFromState(state, function(item) {
+        optionalPromise(
+          query('GET_BEFORE_REMOVE_FILE'),
+          createItemAPI(item)
+        ).then(function(shouldRemove) {
+          if (!shouldRemove) {
+            return;
+          }
+          dispatch('REMOVE_ITEM', { query: item });
+        });
       }),
 
-      // private action for timing the removal of an item from the items list
-      SPLICE_ITEM: function SPLICE_ITEM(_ref7) {
-        var id = _ref7.id;
-        return removeItem(state.items, getItemById(state.items, id));
-      },
+      RELEASE_ITEM: getItemByQueryFromState(state, function(item) {
+        item.release();
+      }),
+
+      REMOVE_ITEM: getItemByQueryFromState(state, function(item, success) {
+        var removeFromView = function removeFromView() {
+          // get id reference
+          var id = item.id;
+
+          // archive the item, this does not remove it from the list
+          getItemById(state.items, id).archive();
+
+          // tell the view the item has been removed
+          dispatch('DID_REMOVE_ITEM', { id: id, item: item });
+
+          // now the list has been modified
+          listUpdated(dispatch, state);
+
+          // correctly removed
+          success(createItemAPI(item));
+        };
+
+        // if this is a local file and the server.remove function has been configured, send source there so dev can remove file from server
+        var server = state.options.server;
+        if (
+          item.origin === FileOrigin$1.LOCAL &&
+          server &&
+          isFunction(server.remove)
+        ) {
+          dispatch('DID_START_ITEM_REMOVE', { id: item.id });
+
+          server.remove(
+            item.source,
+            function() {
+              return removeFromView();
+            },
+            function(status) {
+              dispatch('DID_THROW_ITEM_REMOVE_ERROR', {
+                id: item.id,
+                error: createResponse('error', 0, status, null),
+                status: {
+                  main: dynamicLabel(state.options.labelFileRemoveError)(
+                    status
+                  ),
+                  sub: state.options.labelTapToRetry
+                }
+              });
+            }
+          );
+        } else {
+          removeFromView();
+        }
+      }),
 
       ABORT_ITEM_LOAD: getItemByQueryFromState(state, function(item) {
-        // stop loading this file
         item.abortLoad();
-
-        // the file will throw an event and that will take
-        // care of removing the item from the list
       }),
 
       ABORT_ITEM_PROCESSING: getItemByQueryFromState(state, function(item) {
-        // stop processing this file
-        item.abortProcessing();
+        // test if is already processed
+        if (item.serverId) {
+          dispatch('REVERT_ITEM_PROCESSING', { id: item.id });
+          return;
+        }
 
-        // the file will throw an event and that will take
-        // care of removing the item from the list
+        // abort
+        item.abortProcessing().then(function() {
+          var shouldRemove = state.options.instantUpload;
+          if (shouldRemove) {
+            dispatch('REMOVE_ITEM', { query: item.id });
+          }
+        });
+      }),
+
+      REQUEST_REVERT_ITEM_PROCESSING: getItemByQueryFromState(state, function(
+        item
+      ) {
+        // not instant uploading, revert immidiately
+        if (!state.options.instantUpload) {
+          dispatch('REVERT_ITEM_PROCESSING', { query: item });
+          return;
+        }
+
+        // if we're instant uploading the file will also be removed if we revert,
+        // so if a before remove file hook is defined we need to run it now
+        var handleRevert = function handleRevert(shouldRevert) {
+          if (!shouldRevert) return;
+          dispatch('REVERT_ITEM_PROCESSING', { query: item });
+        };
+
+        var fn = query('GET_BEFORE_REMOVE_FILE');
+        if (!fn) {
+          return handleRevert(true);
+        }
+
+        var requestRemoveResult = fn(createItemAPI(item));
+        if (requestRemoveResult == null) {
+          // undefined or null
+          return handleRevert(true);
+        }
+
+        if (typeof requestRemoveResult === 'boolean') {
+          return handleRevert(requestRemoveResult);
+        }
+
+        if (typeof requestRemoveResult.then === 'function') {
+          requestRemoveResult.then(handleRevert);
+        }
       }),
 
       REVERT_ITEM_PROCESSING: getItemByQueryFromState(state, function(item) {
-        // remove from server
-        item.revert(
-          createRevertFunction(
-            state.options.server.url,
-            state.options.server.revert
+        item
+          .revert(
+            createRevertFunction(
+              state.options.server.url,
+              state.options.server.revert
+            ),
+            query('GET_FORCE_REVERT')
           )
-        );
+          .then(function() {
+            var shouldRemove = state.options.instantUpload || isMockItem(item);
+            if (shouldRemove) {
+              dispatch('REMOVE_ITEM', { query: item.id });
+            }
+          })
+          .catch(function() {});
       }),
 
-      SET_OPTIONS: function SET_OPTIONS(_ref8) {
-        var options = _ref8.options;
+      SET_OPTIONS: function SET_OPTIONS(_ref10) {
+        var options = _ref10.options;
 
         forin(options, function(key, value) {
           dispatch('SET_' + fromCamels(key, '_').toUpperCase(), {
@@ -4511,12 +5210,12 @@ function signature:
     };
   };
 
-  var createElement$1 = function createElement(tagName) {
-    return document.createElement(tagName);
+  var formatFilename = function formatFilename(name) {
+    return name;
   };
 
-  var formatFilename = function formatFilename(name) {
-    return decodeURI(name);
+  var createElement$1 = function createElement(tagName) {
+    return document.createElement(tagName);
   };
 
   var text = function text(node, value) {
@@ -4615,6 +5314,10 @@ function signature:
       return;
     }
 
+    if (props.align) {
+      root.element.dataset.align = props.align;
+    }
+
     // get width of stroke
     var ringStrokeWidth = parseInt(attr(root.ref.path, 'stroke-width'), 10);
 
@@ -4657,11 +5360,12 @@ function signature:
   var progressIndicator = createView({
     tag: 'div',
     name: 'progress-indicator',
+    ignoreRectUpdate: true,
     ignoreRect: true,
     create: create$7,
     write: write$5,
     mixins: {
-      apis: ['progress', 'spin'],
+      apis: ['progress', 'spin', 'align'],
       styles: ['opacity'],
       animations: {
         opacity: { type: 'tween', duration: 500 },
@@ -4703,6 +5407,7 @@ function signature:
       type: 'button'
     },
     ignoreRect: true,
+    ignoreRectUpdate: true,
     name: 'file-action-button',
     mixins: {
       apis: ['label'],
@@ -4818,6 +5523,7 @@ function signature:
   var fileInfo = createView({
     name: 'file-info',
     ignoreRect: true,
+    ignoreRectUpdate: true,
     write: createRoute({
       DID_LOAD_ITEM: updateFile,
       DID_UPDATE_ITEM_META: updateFile,
@@ -4825,7 +5531,7 @@ function signature:
       DID_THROW_ITEM_INVALID: updateFileSizeOnError
     }),
     didCreateView: function didCreateView(root) {
-      applyFilters('CREATE_VIEW', _extends({}, root, { view: root }));
+      applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
     },
     create: create$9,
     mixins: {
@@ -4928,6 +5634,7 @@ function signature:
   var fileStatus = createView({
     name: 'file-status',
     ignoreRect: true,
+    ignoreRectUpdate: true,
     write: createRoute({
       DID_LOAD_ITEM: clear,
       DID_REVERT_ITEM_PROCESSING: clear,
@@ -4938,10 +5645,12 @@ function signature:
       DID_UPDATE_ITEM_LOAD_PROGRESS: didSetItemLoadProgress,
       DID_THROW_ITEM_LOAD_ERROR: error,
       DID_THROW_ITEM_INVALID: error,
-      DID_THROW_ITEM_PROCESSING_ERROR: error
+      DID_THROW_ITEM_PROCESSING_ERROR: error,
+      DID_THROW_ITEM_PROCESSING_REVERT_ERROR: error,
+      DID_THROW_ITEM_REMOVE_ERROR: error
     }),
     didCreateView: function didCreateView(root) {
-      applyFilters('CREATE_VIEW', _extends({}, root, { view: root }));
+      applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
     },
     create: create$10,
     mixins: {
@@ -4957,46 +5666,54 @@ function signature:
   /**
    * Button definitions for the file view
    */
+
   var Buttons = {
     AbortItemLoad: {
       label: 'GET_LABEL_BUTTON_ABORT_ITEM_LOAD',
       action: 'ABORT_ITEM_LOAD',
-      className: 'filepond--action-abort-item-load'
+      className: 'filepond--action-abort-item-load',
+      align: 'LOAD_INDICATOR_POSITION' // right
     },
     RetryItemLoad: {
       label: 'GET_LABEL_BUTTON_RETRY_ITEM_LOAD',
       action: 'RETRY_ITEM_LOAD',
       icon: 'GET_ICON_RETRY',
-      className: 'filepond--action-retry-item-load'
+      className: 'filepond--action-retry-item-load',
+      align: 'BUTTON_PROCESS_ITEM_POSITION' // right
     },
     RemoveItem: {
       label: 'GET_LABEL_BUTTON_REMOVE_ITEM',
-      action: 'REMOVE_ITEM',
+      action: 'REQUEST_REMOVE_ITEM',
       icon: 'GET_ICON_REMOVE',
-      className: 'filepond--action-remove-item'
+      className: 'filepond--action-remove-item',
+      align: 'BUTTON_REMOVE_ITEM_POSITION' // left
     },
     ProcessItem: {
       label: 'GET_LABEL_BUTTON_PROCESS_ITEM',
       action: 'REQUEST_ITEM_PROCESSING',
       icon: 'GET_ICON_PROCESS',
-      className: 'filepond--action-process-item'
+      className: 'filepond--action-process-item',
+      align: 'BUTTON_PROCESS_ITEM_POSITION' // right
     },
     AbortItemProcessing: {
       label: 'GET_LABEL_BUTTON_ABORT_ITEM_PROCESSING',
       action: 'ABORT_ITEM_PROCESSING',
-      className: 'filepond--action-abort-item-processing'
+      className: 'filepond--action-abort-item-processing',
+      align: 'BUTTON_PROCESS_ITEM_POSITION' // right
     },
     RetryItemProcessing: {
       label: 'GET_LABEL_BUTTON_RETRY_ITEM_PROCESSING',
       action: 'RETRY_ITEM_PROCESSING',
       icon: 'GET_ICON_RETRY',
-      className: 'filepond--action-retry-item-processing'
+      className: 'filepond--action-retry-item-processing',
+      align: 'BUTTON_PROCESS_ITEM_POSITION' // right
     },
     RevertItemProcessing: {
       label: 'GET_LABEL_BUTTON_UNDO_ITEM_PROCESSING',
-      action: 'REVERT_ITEM_PROCESSING',
+      action: 'REQUEST_REVERT_ITEM_PROCESSING',
       icon: 'GET_ICON_UNDO',
-      className: 'filepond--action-revert-item-processing'
+      className: 'filepond--action-revert-item-processing',
+      align: 'BUTTON_PROCESS_ITEM_POSITION' // right
     }
   };
 
@@ -5025,6 +5742,18 @@ function signature:
     return Math.floor(root.ref.buttonRemoveItem.rect.element.left / 2);
   };
 
+  var getLoadIndicatorAlignment = function getLoadIndicatorAlignment(root) {
+    return root.query('GET_STYLE_LOAD_INDICATOR_POSITION');
+  };
+  var getProcessIndicatorAlignment = function getProcessIndicatorAlignment(
+    root
+  ) {
+    return root.query('GET_STYLE_PROGRESS_INDICATOR_POSITION');
+  };
+  var getRemoveIndicatorAligment = function getRemoveIndicatorAligment(root) {
+    return root.query('GET_STYLE_BUTTON_REMOVE_ITEM_POSITION');
+  };
+
   var DefaultStyle = {
     buttonAbortItemLoad: { opacity: 0 },
     buttonRetryItemLoad: { opacity: 0 },
@@ -5033,8 +5762,11 @@ function signature:
     buttonAbortItemProcessing: { opacity: 0 },
     buttonRetryItemProcessing: { opacity: 0 },
     buttonRevertItemProcessing: { opacity: 0 },
-    loadProgressIndicator: { opacity: 0 },
-    processProgressIndicator: { opacity: 0 },
+    loadProgressIndicator: { opacity: 0, align: getLoadIndicatorAlignment },
+    processProgressIndicator: {
+      opacity: 0,
+      align: getProcessIndicatorAlignment
+    },
     processingCompleteIndicator: { opacity: 0, scaleX: 0.75, scaleY: 0.75 },
     info: { translateX: 0, translateY: 0, opacity: 0 },
     status: { translateX: 0, translateY: 0, opacity: 0 }
@@ -5059,6 +5791,7 @@ function signature:
       info: { translateX: calculateFileInfoOffset },
       status: { translateX: calculateFileInfoOffset, opacity: 1 }
     },
+
     DID_START_ITEM_LOAD: {
       buttonAbortItemLoad: { opacity: 1 },
       loadProgressIndicator: { opacity: 1 },
@@ -5070,6 +5803,26 @@ function signature:
       info: { translateX: calculateFileInfoOffset },
       status: { opacity: 1 }
     },
+
+    DID_START_ITEM_REMOVE: {
+      processProgressIndicator: {
+        opacity: 1,
+        align: getRemoveIndicatorAligment
+      },
+      info: { translateX: calculateFileInfoOffset },
+      status: { opacity: 0 }
+    },
+
+    DID_THROW_ITEM_REMOVE_ERROR: {
+      processProgressIndicator: {
+        opacity: 0,
+        align: getRemoveIndicatorAligment
+      },
+      buttonRemoveItem: { opacity: 1 },
+      info: { translateX: calculateFileInfoOffset },
+      status: { opacity: 1, translateX: calculateFileInfoOffset }
+    },
+
     DID_LOAD_ITEM: IdleStyle,
     DID_LOAD_LOCAL_ITEM: {
       buttonRemoveItem: { opacity: 1 },
@@ -5089,6 +5842,11 @@ function signature:
       buttonRetryItemProcessing: { opacity: 1 },
       status: { opacity: 1 },
       info: { translateX: calculateFileInfoOffset }
+    },
+    DID_THROW_ITEM_PROCESSING_REVERT_ERROR: {
+      buttonRevertItemProcessing: { opacity: 1 },
+      status: { opacity: 1 },
+      info: { opacity: 1 }
     },
     DID_ABORT_ITEM_PROCESSING: {
       buttonRemoveItem: { opacity: 1 },
@@ -5124,25 +5882,39 @@ function signature:
   var create$6 = function create(_ref2) {
     var root = _ref2.root,
       props = _ref2.props;
+    var id = props.id;
 
     // allow reverting upload
+
     var allowRevert = root.query('GET_ALLOW_REVERT');
 
+    // is instant uploading, need this to determine the icon of the undo button
+    var instantUpload = root.query('GET_INSTANT_UPLOAD');
+
+    // is async set up
+    var isAsync = root.query('IS_ASYNC');
+
     // enabled buttons array
-    var enabledButtons = root.query('IS_ASYNC')
+    var enabledButtons = isAsync
       ? ButtonKeys.concat()
       : ButtonKeys.filter(function(key) {
           return !/Process/.test(key);
         });
 
     // remove last button (revert) if not allowed
-    if (!allowRevert) {
+    if (isAsync && !allowRevert) {
       enabledButtons.splice(-1, 1);
       var map = StyleMap['DID_COMPLETE_ITEM_PROCESSING'];
       map.info.translateX = calculateFileHorizontalCenterOffset;
       map.info.translateY = calculateFileVerticalCenterOffset;
       map.status.translateY = calculateFileVerticalCenterOffset;
       map.processingCompleteIndicator = { opacity: 1, scaleX: 1, scaleY: 1 };
+    }
+
+    // update icon and label for revert button when instant uploading
+    if (instantUpload && allowRevert) {
+      Buttons['RevertItemProcessing'].label = 'GET_LABEL_BUTTON_REMOVE_ITEM';
+      Buttons['RevertItemProcessing'].icon = 'GET_ICON_REMOVE';
     }
 
     // create the button views
@@ -5159,12 +5931,17 @@ function signature:
         root.appendChildView(buttonView);
       }
 
+      // add position attribute
+      buttonView.element.dataset.align = root.query(
+        'GET_STYLE_' + definition.align
+      );
+
       // add class
       buttonView.element.classList.add(definition.className);
 
       // handle interactions
       buttonView.on('click', function() {
-        root.dispatch(definition.action, { query: props.id });
+        root.dispatch(definition.action, { query: id });
       });
 
       // set reference
@@ -5173,34 +5950,40 @@ function signature:
 
     // create file info view
     root.ref.info = root.appendChildView(
-      root.createChildView(fileInfo, { id: props.id })
+      root.createChildView(fileInfo, { id: id })
     );
 
     // create file status view
     root.ref.status = root.appendChildView(
-      root.createChildView(fileStatus, { id: props.id })
+      root.createChildView(fileStatus, { id: id })
     );
 
     // checkmark
     root.ref.processingCompleteIndicator = root.appendChildView(
       root.createChildView(processingCompleteIndicatorView)
     );
+    root.ref.processingCompleteIndicator.element.dataset.align = root.query(
+      'GET_STYLE_BUTTON_PROCESS_ITEM_POSITION'
+    );
 
     // add progress indicators
-    root.ref.loadProgressIndicator = root.appendChildView(
-      root.createChildView(progressIndicator, { opacity: 0 })
+    var loadIndicatorView = root.appendChildView(
+      root.createChildView(progressIndicator, {
+        opacity: 0,
+        align: root.query('GET_STYLE_LOAD_INDICATOR_POSITION')
+      })
     );
-    root.ref.loadProgressIndicator.element.classList.add(
-      'filepond--load-indicator'
-    );
+    loadIndicatorView.element.classList.add('filepond--load-indicator');
+    root.ref.loadProgressIndicator = loadIndicatorView;
 
-    root.ref.processProgressIndicator = root.appendChildView(
-      root.createChildView(progressIndicator, { opacity: 0 })
+    var progressIndicatorView = root.appendChildView(
+      root.createChildView(progressIndicator, {
+        opacity: 0,
+        align: root.query('GET_STYLE_PROGRESS_INDICATOR_POSITION')
+      })
     );
-
-    root.ref.processProgressIndicator.element.classList.add(
-      'filepond--process-indicator'
-    );
+    progressIndicatorView.element.classList.add('filepond--process-indicator');
+    root.ref.processProgressIndicator = progressIndicatorView;
   };
 
   var write$4 = function write(_ref3) {
@@ -5209,7 +5992,7 @@ function signature:
       props = _ref3.props;
 
     // route actions
-    route$3({ root: root, actions: actions, props: props });
+    route$4({ root: root, actions: actions, props: props });
 
     // select last state change action
     var action = []
@@ -5223,13 +6006,13 @@ function signature:
       });
 
     // no need to set same state twice
-    if (!action || (action && action.type === props.currentStyle)) {
+    if (!action || (action && action.type === root.ref.currentAction)) {
       return;
     }
 
     // set current state
-    props.currentStyle = action.type;
-    var newStyles = StyleMap[props.currentStyle];
+    root.ref.currentAction = action.type;
+    var newStyles = StyleMap[root.ref.currentAction];
 
     forin(DefaultStyle, function(name, defaultStyles) {
       // get reference to control
@@ -5246,7 +6029,7 @@ function signature:
     });
   };
 
-  var route$3 = createRoute({
+  var route$4 = createRoute({
     DID_SET_LABEL_BUTTON_ABORT_ITEM_PROCESSING: function DID_SET_LABEL_BUTTON_ABORT_ITEM_PROCESSING(
       _ref4
     ) {
@@ -5263,32 +6046,46 @@ function signature:
 
       root.ref.buttonAbortItemLoad.label = action.value;
     },
-    DID_REQUEST_ITEM_PROCESSING: function DID_REQUEST_ITEM_PROCESSING(_ref6) {
-      var root = _ref6.root;
+    DID_SET_LABEL_BUTTON_ABORT_ITEM_REMOVAL: function DID_SET_LABEL_BUTTON_ABORT_ITEM_REMOVAL(
+      _ref6
+    ) {
+      var root = _ref6.root,
+        action = _ref6.action;
+
+      root.ref.buttonAbortItemRemoval.label = action.value;
+    },
+    DID_REQUEST_ITEM_PROCESSING: function DID_REQUEST_ITEM_PROCESSING(_ref7) {
+      var root = _ref7.root;
 
       root.ref.processProgressIndicator.spin = true;
       root.ref.processProgressIndicator.progress = 0;
     },
-    DID_START_ITEM_LOAD: function DID_START_ITEM_LOAD(_ref7) {
-      var root = _ref7.root;
+    DID_START_ITEM_LOAD: function DID_START_ITEM_LOAD(_ref8) {
+      var root = _ref8.root;
 
       root.ref.loadProgressIndicator.spin = true;
       root.ref.loadProgressIndicator.progress = 0;
     },
+    DID_START_ITEM_REMOVE: function DID_START_ITEM_REMOVE(_ref9) {
+      var root = _ref9.root;
+
+      root.ref.processProgressIndicator.spin = true;
+      root.ref.processProgressIndicator.progress = 0;
+    },
     DID_UPDATE_ITEM_LOAD_PROGRESS: function DID_UPDATE_ITEM_LOAD_PROGRESS(
-      _ref8
+      _ref10
     ) {
-      var root = _ref8.root,
-        action = _ref8.action;
+      var root = _ref10.root,
+        action = _ref10.action;
 
       root.ref.loadProgressIndicator.spin = false;
       root.ref.loadProgressIndicator.progress = action.progress;
     },
     DID_UPDATE_ITEM_PROCESS_PROGRESS: function DID_UPDATE_ITEM_PROCESS_PROGRESS(
-      _ref9
+      _ref11
     ) {
-      var root = _ref9.root,
-        action = _ref9.action;
+      var root = _ref11.root,
+        action = _ref11.action;
 
       root.ref.processProgressIndicator.spin = false;
       root.ref.processProgressIndicator.progress = action.progress;
@@ -5299,7 +6096,7 @@ function signature:
     create: create$6,
     write: write$4,
     didCreateView: function didCreateView(root) {
-      applyFilters('CREATE_VIEW', _extends({}, root, { view: root }));
+      applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
     },
     name: 'file'
   });
@@ -5366,6 +6163,7 @@ function signature:
 
   var fileWrapper = createView({
     create: create$5,
+    ignoreRect: true,
     write: createRoute({
       DID_LOAD_ITEM: didLoadItem,
       DID_REMOVE_ITEM: didRemoveItem,
@@ -5373,7 +6171,7 @@ function signature:
       DID_REVERT_ITEM_PROCESSING: didRevertItemProcessing
     }),
     didCreateView: function didCreateView(root) {
-      applyFilters('CREATE_VIEW', _extends({}, root, { view: root }));
+      applyFilters('CREATE_VIEW', Object.assign({}, root, { view: root }));
     },
     tag: 'fieldset',
     name: 'file-wrapper'
@@ -5419,12 +6217,15 @@ function signature:
     });
 
     root.element.classList.add('filepond--' + props.name);
+
+    root.ref.scalable = null;
   };
 
   var createSection = function createSection(root, section, className) {
     var viewConstructor = createView({
       name: 'panel-' + section.name + ' filepond--' + className,
-      mixins: section.mixins
+      mixins: section.mixins,
+      ignoreRectUpdate: true
     });
 
     var view = root.createChildView(viewConstructor, section.props);
@@ -5436,14 +6237,16 @@ function signature:
     var root = _ref2.root,
       props = _ref2.props;
 
+    // update scalable state
+    if (root.ref.scalable === null || props.scalable !== root.ref.scalable) {
+      root.ref.scalable = isBoolean(props.scalable) ? props.scalable : true;
+      root.element.dataset.scalable = root.ref.scalable;
+    }
+
+    // no height, can't set
     if (!props.height) {
       return;
     }
-
-    // can it scale?
-    root.element.dataset.scalable = isBoolean(props.scalable)
-      ? props.scalable
-      : true;
 
     // get child rects
     var topRect = root.ref.top.rect.element;
@@ -5474,6 +6277,15 @@ function signature:
     }
   });
 
+  var ITEM_TRANSLATE_SPRING = {
+    type: 'spring',
+    stiffness: 0.75,
+    damping: 0.45,
+    mass: 10
+  };
+
+  var ITEM_SCALE_SPRING = 'spring';
+
   /**
    * Creates the file view
    */
@@ -5481,8 +6293,11 @@ function signature:
     var root = _ref.root,
       props = _ref.props;
 
+    // set id
+    root.element.id = 'filepond--item-' + props.id;
+
     // file view
-    root.ref.controls = root.appendChildView(
+    root.ref.container = root.appendChildView(
       root.createChildView(fileWrapper, { id: props.id })
     );
 
@@ -5504,25 +6319,53 @@ function signature:
     DID_THROW_ITEM_INVALID: 'load-invalid',
     DID_THROW_ITEM_LOAD_ERROR: 'load-error',
     DID_LOAD_ITEM: 'idle',
+    DID_THROW_ITEM_REMOVE_ERROR: 'remove-error',
+    DID_START_ITEM_REMOVE: 'busy',
     DID_START_ITEM_PROCESSING: 'busy',
     DID_REQUEST_ITEM_PROCESSING: 'busy',
     DID_UPDATE_ITEM_PROCESS_PROGRESS: 'processing',
     DID_COMPLETE_ITEM_PROCESSING: 'processing-complete',
     DID_THROW_ITEM_PROCESSING_ERROR: 'processing-error',
+    DID_THROW_ITEM_PROCESSING_REVERT_ERROR: 'processing-revert-error',
     DID_ABORT_ITEM_PROCESSING: 'cancelled',
     DID_REVERT_ITEM_PROCESSING: 'idle'
   };
 
-  var write$3 = function write(_ref2) {
-    var root = _ref2.root,
-      actions = _ref2.actions,
-      props = _ref2.props;
+  var route$3 = createRoute({
+    DID_UPDATE_PANEL_HEIGHT: function DID_UPDATE_PANEL_HEIGHT(_ref2) {
+      var root = _ref2.root,
+        action = _ref2.action;
+      var height = action.height;
 
-    // update panel height
-    root.ref.panel.height = root.ref.controls.rect.inner.height;
+      root.height = height;
+    }
+  });
 
-    // set panel height
-    root.height = root.ref.controls.rect.inner.height;
+  var write$3 = function write(_ref3) {
+    var root = _ref3.root,
+      actions = _ref3.actions,
+      props = _ref3.props,
+      shouldOptimize = _ref3.shouldOptimize;
+
+    // route actions
+    var aspectRatio =
+      root.query('GET_ITEM_PANEL_ASPECT_RATIO') ||
+      root.query('GET_PANEL_ASPECT_RATIO');
+    if (!aspectRatio) {
+      route$3({ root: root, actions: actions, props: props });
+      if (!root.height) {
+        root.height = root.ref.container.rect.element.height;
+      }
+    } else if (!shouldOptimize) {
+      root.height = root.rect.element.width * aspectRatio;
+    }
+
+    // sync panel height with item height
+    if (shouldOptimize) {
+      root.ref.panel.height = null;
+    }
+
+    root.ref.panel.height = root.height;
 
     // select last state change action
     var action = []
@@ -5536,9 +6379,7 @@ function signature:
       });
 
     // no need to set same state twice
-    if (!action || (action && action.type === props.currentState)) {
-      return;
-    }
+    if (!action || (action && action.type === props.currentState)) return;
 
     // set current state
     props.currentState = action.type;
@@ -5550,10 +6391,16 @@ function signature:
   var item = createView({
     create: create$4,
     write: write$3,
+    destroy: function destroy(_ref4) {
+      var root = _ref4.root,
+        props = _ref4.props;
+
+      root.dispatch('RELEASE_ITEM', { query: props.id });
+    },
     tag: 'li',
     name: 'item',
     mixins: {
-      apis: ['id', 'markedForRemoval'],
+      apis: ['id', 'interactionMethod', 'markedForRemoval', 'spawnDate'],
       styles: [
         'translateX',
         'translateY',
@@ -5563,20 +6410,87 @@ function signature:
         'height'
       ],
       animations: {
-        scaleX: 'spring',
-        scaleY: 'spring',
-        translateX: 'spring',
-        translateY: 'spring',
-        opacity: { type: 'tween', duration: 250 }
+        scaleX: ITEM_SCALE_SPRING,
+        scaleY: ITEM_SCALE_SPRING,
+        translateX: ITEM_TRANSLATE_SPRING,
+        translateY: ITEM_TRANSLATE_SPRING,
+        opacity: { type: 'tween', duration: 150 }
       }
     }
   });
+
+  var getItemIndexByPosition = function getItemIndexByPosition(
+    view,
+    positionInView
+  ) {
+    if (!positionInView) return;
+
+    var horizontalSpace = view.rect.element.width;
+    var children = view.childViews;
+    var l = children.length;
+    var last = null;
+
+    // -1, don't move items to accomodate (either add to top or bottom)
+    if (l === 0 || positionInView.top < children[0].rect.element.top) return -1;
+
+    // let's get the item width
+    var item = children[0];
+    var itemRect = item.rect.element;
+    var itemHorizontalMargin = itemRect.marginLeft + itemRect.marginRight;
+    var itemWidth = itemRect.width + itemHorizontalMargin;
+    var itemsPerRow = Math.round(horizontalSpace / itemWidth);
+
+    // stack
+    if (itemsPerRow === 1) {
+      for (var index = 0; index < l; index++) {
+        var child = children[index];
+        var childMid = child.rect.outer.top + child.rect.element.height * 0.5;
+        if (positionInView.top < childMid) {
+          return index;
+        }
+      }
+      return l;
+    }
+
+    // grid
+    var itemVerticalMargin = itemRect.marginTop + itemRect.marginBottom;
+    var itemHeight = itemRect.height + itemVerticalMargin;
+    for (var _index = 0; _index < l; _index++) {
+      var indexX = _index % itemsPerRow;
+      var indexY = Math.floor(_index / itemsPerRow);
+
+      var offsetX = indexX * itemWidth;
+      var offsetY = indexY * itemHeight;
+
+      var itemTop = offsetY - itemRect.marginTop;
+      var itemRight = offsetX + itemWidth;
+      var itemBottom = offsetY + itemHeight + itemRect.marginBottom;
+
+      if (positionInView.top < itemBottom && positionInView.top > itemTop) {
+        if (positionInView.left < itemRight) {
+          return _index;
+        } else if (_index !== l - 1) {
+          last = _index;
+        } else {
+          last = null;
+        }
+      }
+    }
+
+    if (last !== null) {
+      return last;
+    }
+
+    return l;
+  };
 
   var create$3 = function create(_ref) {
     var root = _ref.root;
 
     // need to set role to list as otherwise it won't be read as a list by VoiceOver
     attr(root.element, 'role', 'list');
+
+    root.ref.lastItemSpanwDate = Date.now();
   };
 
   /**
@@ -5591,28 +6505,20 @@ function signature:
       index = action.index,
       interactionMethod = action.interactionMethod;
 
-    var animation = {
-      opacity: 0
-    };
+    root.ref.addIndex = index;
 
-    if (interactionMethod === InteractionMethod.NONE) {
-      animation.translateY = null;
+    var now = Date.now();
+    var spawnDate = now;
+    var opacity = 1;
+
+    if (interactionMethod !== InteractionMethod.NONE) {
+      opacity = 0;
+      var cooldown = root.query('GET_ITEM_INSERT_INTERVAL');
+      var dist = now - root.ref.lastItemSpanwDate;
+      spawnDate = dist < cooldown ? now + (cooldown - dist) : now;
     }
 
-    if (interactionMethod === InteractionMethod.DROP) {
-      animation.scaleX = 0.8;
-      animation.scaleY = 0.8;
-      animation.translateY = null;
-    }
-
-    if (interactionMethod === InteractionMethod.BROWSE) {
-      animation.translateY = -30;
-    }
-
-    if (interactionMethod === InteractionMethod.API) {
-      animation.translateX = -100;
-      animation.translateY = null;
-    }
+    root.ref.lastItemSpanwDate = spawnDate;
 
     root.appendChildView(
       root.createChildView(
@@ -5620,15 +6526,62 @@ function signature:
         item,
 
         // props
-        _extends(
-          {
-            id: id
-          },
-          animation
-        )
+        {
+          spawnDate: spawnDate,
+          id: id,
+          opacity: opacity,
+          interactionMethod: interactionMethod
+        }
       ),
       index
     );
+  };
+
+  var moveItem = function moveItem(item$$1, x, y) {
+    var vx =
+      arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+    var vy =
+      arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 1;
+
+    item$$1.translateX = x;
+    item$$1.translateY = y;
+
+    if (Date.now() > item$$1.spawnDate) {
+      // reveal element
+      if (item$$1.opacity === 0) {
+        introItemView(item$$1, x, y, vx, vy);
+      }
+
+      // make sure is default scale every frame
+      item$$1.scaleX = 1;
+      item$$1.scaleY = 1;
+      item$$1.opacity = 1;
+    }
+  };
+
+  var introItemView = function introItemView(item$$1, x, y, vx, vy) {
+    if (item$$1.interactionMethod === InteractionMethod.NONE) {
+      item$$1.translateX = null;
+      item$$1.translateX = x;
+      item$$1.translateY = null;
+      item$$1.translateY = y;
+    } else if (item$$1.interactionMethod === InteractionMethod.DROP) {
+      item$$1.translateX = null;
+      item$$1.translateX = x - vx * 20;
+
+      item$$1.translateY = null;
+      item$$1.translateY = y - vy * 10;
+
+      item$$1.scaleX = 0.8;
+      item$$1.scaleY = 0.8;
+    } else if (item$$1.interactionMethod === InteractionMethod.BROWSE) {
+      item$$1.translateY = null;
+      item$$1.translateY = y - 30;
+    } else if (item$$1.interactionMethod === InteractionMethod.API) {
+      item$$1.translateX = null;
+      item$$1.translateX = x - 30;
+      item$$1.translateY = null;
+    }
   };
 
   /**
@@ -5669,30 +6622,6 @@ function signature:
     DID_REMOVE_ITEM: removeItemView
   });
 
-  var dragTranslation = function dragTranslation(
-    childIndex,
-    dragIndex,
-    itemMargin
-  ) {
-    if (childIndex - 1 === dragIndex) {
-      return itemMargin / 6;
-    }
-
-    if (childIndex === dragIndex) {
-      return itemMargin / 2;
-    }
-
-    if (childIndex + 1 === dragIndex) {
-      return -itemMargin / 2;
-    }
-
-    if (childIndex + 2 === dragIndex) {
-      return -itemMargin / 6;
-    }
-
-    return 0;
-  };
-
   /**
    * Write to view
    * @param root
@@ -5702,52 +6631,139 @@ function signature:
   var write$2 = function write(_ref4) {
     var root = _ref4.root,
       props = _ref4.props,
-      actions = _ref4.actions;
+      actions = _ref4.actions,
+      shouldOptimize = _ref4.shouldOptimize;
 
     // route actions
     route$2({ root: root, props: props, actions: actions });
 
-    var resting = true;
+    var dragCoordinates = props.dragCoordinates;
 
-    // update item positions
-    var offset = 0;
-    root.childViews
-      .filter(function(child) {
-        return child.rect.outer.height;
+    // get index
+
+    var dragIndex = dragCoordinates
+      ? getItemIndexByPosition(root, dragCoordinates)
+      : null;
+
+    // available space on horizontal axis
+    var horizontalSpace = root.rect.element.width;
+
+    // only draw children that have dimensions
+    var visibleChildren = root.childViews.filter(function(child) {
+      return child.rect.outer.height;
+    });
+
+    // sort based on current active items
+    var children = root
+      .query('GET_ACTIVE_ITEMS')
+      .map(function(item$$1) {
+        return visibleChildren.find(function(child) {
+          return child.id === item$$1.id;
+        });
       })
-      .forEach(function(child, childIndex) {
-        var childRect = child.rect;
+      .filter(function(item$$1) {
+        return item$$1;
+      });
 
-        // set this child offset
-        child.translateX = 0;
-        child.translateY =
-          offset +
-          (props.dragIndex > -1
-            ? dragTranslation(childIndex, props.dragIndex, 10)
-            : 0);
+    // add index is used to reserve the dropped/added item index till the actual item is rendered
+    var addIndex = root.ref.addIndex || null;
 
-        // show child if it's not marked for removal
-        if (!child.markedForRemoval) {
-          child.scaleX = 1;
-          child.scaleY = 1;
-          child.opacity = 1;
+    // add index no longer needed till possibly next draw
+    root.ref.addIndex = null;
+
+    var dragIndexOffset = 0;
+    var removeIndexOffset = 0;
+    var addIndexOffset = 0;
+
+    if (children.length === 0) return;
+
+    var childRect = children[0].rect.element;
+    var itemVerticalMargin = childRect.marginTop + childRect.marginBottom;
+    var itemHorizontalMargin = childRect.marginLeft + childRect.marginRight;
+    var itemWidth = childRect.width + itemHorizontalMargin;
+    var itemHeight = childRect.height + itemVerticalMargin;
+    var itemsPerRow = Math.round(horizontalSpace / itemWidth);
+
+    // stack
+    if (itemsPerRow === 1) {
+      var offsetY = 0;
+      var dragOffset = 0;
+
+      children.forEach(function(child, index) {
+        if (dragIndex) {
+          var dist = index - dragIndex;
+          if (dist === -2) {
+            dragOffset = -itemVerticalMargin * 0.25;
+          } else if (dist === -1) {
+            dragOffset = -itemVerticalMargin * 0.75;
+          } else if (dist === 0) {
+            dragOffset = itemVerticalMargin * 0.75;
+          } else if (dist === 1) {
+            dragOffset = itemVerticalMargin * 0.25;
+          } else {
+            dragOffset = 0;
+          }
         }
 
-        // calculate next child offset (reduce height by y scale for views that are being removed)
-        offset += childRect.outer.height;
-      });
+        if (shouldOptimize) {
+          child.translateX = null;
+          child.translateY = null;
+        }
 
-    // remove marked views
-    root.childViews
-      .filter(function(view) {
-        return view.markedForRemoval && view.opacity === 0;
-      })
-      .forEach(function(view) {
-        root.removeChildView(view);
-        resting = false;
-      });
+        if (!child.markedForRemoval) {
+          moveItem(child, 0, offsetY + dragOffset);
+        }
 
-    return resting;
+        var itemHeight = child.rect.element.height + itemVerticalMargin;
+
+        var visualHeight =
+          itemHeight * (child.markedForRemoval ? child.opacity : 1);
+
+        offsetY += visualHeight;
+      });
+    } else {
+      // grid
+      var prevX = 0;
+      var prevY = 0;
+
+      children.forEach(function(child, index) {
+        if (index === dragIndex) {
+          dragIndexOffset = 1;
+        }
+
+        if (index === addIndex) {
+          addIndexOffset += 1;
+        }
+
+        if (child.markedForRemoval && child.opacity < 0.5) {
+          removeIndexOffset -= 1;
+        }
+
+        var visualIndex =
+          index + addIndexOffset + dragIndexOffset + removeIndexOffset;
+
+        var indexX = visualIndex % itemsPerRow;
+        var indexY = Math.floor(visualIndex / itemsPerRow);
+
+        var offsetX = indexX * itemWidth;
+        var offsetY = indexY * itemHeight;
+
+        var vectorX = Math.sign(offsetX - prevX);
+        var vectorY = Math.sign(offsetY - prevY);
+
+        prevX = offsetX;
+        prevY = offsetY;
+
+        if (child.markedForRemoval) return;
+
+        if (shouldOptimize) {
+          child.translateX = null;
+          child.translateY = null;
+        }
+
+        moveItem(child, offsetX, offsetY, vectorX, vectorY);
+      });
+    }
   };
 
   /**
@@ -5772,31 +6788,23 @@ function signature:
     write: write$2,
     tag: 'ul',
     name: 'list',
+    didWriteView: function didWriteView(_ref5) {
+      var root = _ref5.root;
+
+      root.childViews
+        .filter(function(view) {
+          return view.markedForRemoval && view.opacity === 0 && view.resting;
+        })
+        .forEach(function(view) {
+          view._destroy();
+          root.removeChildView(view);
+        });
+    },
     filterFrameActionsForChild: filterSetItemActions,
     mixins: {
-      apis: ['dragIndex']
+      apis: ['dragCoordinates']
     }
   });
-
-  var getItemIndexByPosition = function getItemIndexByPosition(
-    view,
-    positionInView
-  ) {
-    var i = 0;
-    var childViews = view.childViews;
-    var l = childViews.length;
-    for (; i < l; i++) {
-      var item = childViews[i];
-      var itemRect = item.rect.outer;
-      var itemRectMid = itemRect.top + itemRect.height * 0.5;
-
-      if (positionInView.top < itemRectMid) {
-        return i;
-      }
-    }
-
-    return l;
-  };
 
   var create$2 = function create(_ref) {
     var root = _ref.root,
@@ -5814,11 +6822,12 @@ function signature:
       action = _ref2.action;
 
     props.dragCoordinates = {
-      left: action.position.scopeLeft,
+      left: action.position.scopeLeft - root.ref.list.rect.element.left,
       top:
         action.position.scopeTop -
-        root.rect.outer.top +
-        root.rect.element.scrollTop
+        (root.rect.outer.top +
+          root.rect.element.marginTop +
+          root.rect.element.scrollTop)
     };
   };
 
@@ -5842,9 +6851,7 @@ function signature:
     route$1({ root: root, props: props, actions: actions });
 
     // current drag position
-    root.ref.list.dragIndex = props.dragCoordinates
-      ? getItemIndexByPosition(root.ref.list, props.dragCoordinates)
-      : -1;
+    root.ref.list.dragCoordinates = props.dragCoordinates;
 
     // if currently overflowing but no longer received overflow
     if (props.overflowing && !props.overflow) {
@@ -5856,10 +6863,13 @@ function signature:
     }
 
     // if is not overflowing currently but does receive overflow value
-    if (!props.overflowing && props.overflow) {
-      props.overflowing = true;
-      root.element.dataset.state = 'overflow';
-      root.height = props.overflow - root.translateY;
+    if (props.overflow) {
+      var newHeight = Math.round(props.overflow);
+      if (newHeight !== root.height) {
+        props.overflowing = true;
+        root.element.dataset.state = 'overflow';
+        root.height = newHeight;
+      }
     }
   };
 
@@ -5868,8 +6878,11 @@ function signature:
     write: write$1,
     name: 'list-scroller',
     mixins: {
-      apis: ['overflow'],
-      styles: ['height', 'translateY']
+      apis: ['overflow', 'dragCoordinates'],
+      styles: ['height', 'translateY'],
+      animations: {
+        translateY: 'spring'
+      }
     }
   });
 
@@ -5927,7 +6940,7 @@ function signature:
     attr(root.element, 'aria-labelledby', 'filepond--drop-label-' + props.id);
 
     // handle changes to the input field
-    root.element.addEventListener('change', function() {
+    root.ref.handleChange = function(e) {
       if (!root.element.value) {
         return;
       }
@@ -5943,7 +6956,8 @@ function signature:
         // reset input, it's just for exposing a method to drop files, should not retain any state
         resetFileInput(root.element);
       }, 250);
-    });
+    };
+    root.element.addEventListener('change', root.ref.handleChange);
   };
 
   var setAcceptedFileTypes = function setAcceptedFileTypes(_ref2) {
@@ -5997,29 +7011,53 @@ function signature:
     );
   };
 
-  var updateRequiredStatus = function updateRequiredStatus(_ref8) {
-    var root = _ref8.root;
+  var updateRequiredStatus = function updateRequiredStatus(_ref7) {
+    var root = _ref7.root;
 
     // always remove the required attribute when more than zero items
     if (root.query('GET_TOTAL_ITEMS') > 0) {
       attrToggle(root.element, 'required', false);
-    } else if (root.query('GET_REQUIRED')) {
-      // if zero items, we only add it if the field is required
-      attrToggle(root.element, 'required', true);
+    } else {
+      // remove any validation messages
+      var shouldCheckValidity = root.query('GET_CHECK_VALIDITY');
+      if (shouldCheckValidity) {
+        root.element.setCustomValidity('');
+      }
+
+      // we only add required if the field has been deemed required
+      if (root.query('GET_REQUIRED')) {
+        attrToggle(root.element, 'required', true);
+      }
     }
+  };
+
+  var updateFieldValidityStatus = function updateFieldValidityStatus(_ref8) {
+    var root = _ref8.root;
+
+    var shouldCheckValidity = root.query('GET_CHECK_VALIDITY');
+    if (!shouldCheckValidity) return;
+    root.element.setCustomValidity(root.query('GET_LABEL_INVALID_FIELD'));
   };
 
   var browser = createView({
     tag: 'input',
     name: 'browser',
     ignoreRect: true,
+    ignoreRectUpdate: true,
     attributes: {
       type: 'file'
     },
     create: create$12,
+    destroy: function destroy(_ref9) {
+      var root = _ref9.root;
+
+      root.element.removeEventListener('change', root.ref.handleChange);
+    },
     write: createRoute({
-      DID_ADD_ITEM: updateRequiredStatus,
+      DID_LOAD_ITEM: updateRequiredStatus,
+      DID_THROW_ITEM_INVALID: updateFieldValidityStatus,
       DID_REMOVE_ITEM: updateRequiredStatus,
+
       DID_SET_ALLOW_BROWSE: toggleAllowBrowse$1,
       DID_SET_ALLOW_MULTIPLE: toggleAllowMultiple,
       DID_SET_ACCEPTED_FILE_TYPES: setAcceptedFileTypes,
@@ -6058,6 +7096,9 @@ function signature:
       }
     });
 
+    // update
+    updateLabelValue(label, props.caption);
+
     // add!
     root.appendChild(label);
     root.ref.label = label;
@@ -6074,18 +7115,17 @@ function signature:
 
   var dropLabel = createView({
     name: 'drop-label',
+    ignoreRect: true,
     create: create$13,
     write: createRoute({
       DID_SET_LABEL_IDLE: function DID_SET_LABEL_IDLE(_ref2) {
         var root = _ref2.root,
-          action = _ref2.action,
-          props = _ref2.props;
+          action = _ref2.action;
 
-        props.caption = updateLabelValue(root.ref.label, action.value);
+        updateLabelValue(root.ref.label, action.value);
       }
     }),
     mixins: {
-      apis: ['caption'],
       styles: ['opacity', 'translateX', 'translateY'],
       animations: {
         opacity: { type: 'tween', duration: 150 },
@@ -6168,7 +7208,7 @@ function signature:
       props = _ref5.props,
       actions = _ref5.actions;
 
-    route$4({ root: root, props: props, actions: actions });
+    route$5({ root: root, props: props, actions: actions });
 
     var blob$$1 = root.ref.blob;
 
@@ -6178,7 +7218,7 @@ function signature:
     }
   };
 
-  var route$4 = createRoute({
+  var route$5 = createRoute({
     DID_DRAG: moveBlob,
     DID_DROP: explodeBlob,
     DID_END_DRAG: hideBlob
@@ -6186,12 +7226,39 @@ function signature:
 
   var drip = createView({
     ignoreRect: true,
+    ignoreRectUpdate: true,
     name: 'drip',
     write: write$8
   });
 
   var getRootNode = function getRootNode(element) {
     return 'getRootNode' in element ? element.getRootNode() : document;
+  };
+
+  var images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff'];
+  var text$1 = ['css', 'csv', 'html', 'txt'];
+  var map = {
+    zip: 'zip|compressed',
+    epub: 'application/epub+zip'
+  };
+
+  var guesstimateMimeType = function guesstimateMimeType() {
+    var extension =
+      arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+    extension = extension.toLowerCase();
+    if (images.includes(extension)) {
+      return (
+        'image/' +
+        (extension === 'jpg'
+          ? 'jpeg'
+          : extension === 'svg' ? 'svg+xml' : extension)
+      );
+    }
+    if (text$1.includes(extension)) {
+      return 'text/' + extension;
+    }
+    return map[extension] || null;
   };
 
   var requestDataTransferItems = function requestDataTransferItems(
@@ -6302,7 +7369,7 @@ function signature:
               // read as file
               totalFilesFound++;
               entry.file(function(file) {
-                files.push(file);
+                files.push(correctMissingFileType(file));
 
                 if (totalFilesFound === files.length) {
                   resolve(files);
@@ -6316,6 +7383,20 @@ function signature:
       // go!
       readEntries(entry);
     });
+  };
+
+  var correctMissingFileType = function correctMissingFileType(file) {
+    if (file.type.length) return file;
+    var date = file.lastModifiedDate;
+    var name = file.name;
+    file = file.slice(
+      0,
+      file.size,
+      guesstimateMimeType(getExtensionFromFilename(file.name))
+    );
+    file.name = name;
+    file.lastModifiedDate = date;
+    return file;
   };
 
   var isDirectoryEntry = function isDirectoryEntry(item) {
@@ -6377,8 +7458,8 @@ function signature:
     return {
       pageLeft: e.pageX,
       pageTop: e.pageY,
-      scopeLeft: e.layerX || e.offsetX,
-      scopeTop: e.layerY || e.offsetY
+      scopeLeft: e.offsetX || e.layerX,
+      scopeTop: e.offsetY || e.layerY
     };
   };
 
@@ -6464,15 +7545,23 @@ function signature:
     return observer;
   };
 
+  var elementFromPoint = function elementFromPoint(root, point) {
+    if (!('elementFromPoint' in root)) {
+      root = document;
+    }
+    return root.elementFromPoint(point.x, point.y);
+  };
+
   var isEventTarget = function isEventTarget(e, target) {
     // get root
     var root = getRootNode(target);
 
     // get element at position
-    var elementAtPosition = root.elementFromPoint(
-      e.pageX - window.pageXOffset,
-      e.pageY - window.pageYOffset
-    );
+    // if root is not actual shadow DOM and does not have elementFromPoint method, use the one on document
+    var elementAtPosition = elementFromPoint(root, {
+      x: e.pageX - window.pageXOffset,
+      y: e.pageY - window.pageYOffset
+    });
 
     // test if target is the element or if one of its children is
     return elementAtPosition === target || target.contains(elementAtPosition);
@@ -6581,6 +7670,7 @@ function signature:
       e.preventDefault();
 
       var dataTransfer = e.dataTransfer;
+
       requestDataTransferItems(dataTransfer).then(function(items) {
         clients.forEach(function(client) {
           var filterElement = client.filterElement,
@@ -6762,47 +7852,6 @@ function signature:
     return api;
   };
 
-  var debounce = function debounce(func) {
-    var interval =
-      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
-    var immidiateOnly =
-      arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-    var last = Date.now();
-    var timeout = null;
-
-    return function() {
-      for (
-        var _len = arguments.length, args = Array(_len), _key = 0;
-        _key < _len;
-        _key++
-      ) {
-        args[_key] = arguments[_key];
-      }
-
-      clearTimeout(timeout);
-
-      var dist = Date.now() - last;
-
-      var fn = function fn() {
-        last = Date.now();
-        func.apply(undefined, args);
-      };
-
-      if (dist < interval) {
-        // we need to delay by the difference between interval and dist
-        // for example: if distance is 10 ms and interval is 16 ms,
-        // we need to wait an additional 6ms before calling the function)
-        if (!immidiateOnly) {
-          timeout = setTimeout(fn, interval - dist);
-        }
-      } else {
-        // go!
-        fn();
-      }
-    };
-  };
-
   /**
    * Creates the file view
    */
@@ -6929,6 +7978,7 @@ function signature:
   var assistant = createView({
     create: create$14,
     ignoreRect: true,
+    ignoreRectUpdate: true,
     write: createRoute({
       DID_LOAD_ITEM: itemAdded,
       DID_REMOVE_ITEM: itemRemoved,
@@ -6937,6 +7987,7 @@ function signature:
       DID_ABORT_ITEM_PROCESSING: itemProcessedUndo,
       DID_REVERT_ITEM_PROCESSING: itemProcessedUndo,
 
+      DID_THROW_ITEM_REMOVE_ERROR: itemError,
       DID_THROW_ITEM_LOAD_ERROR: itemError,
       DID_THROW_ITEM_INVALID: itemError,
       DID_THROW_ITEM_PROCESSING_ERROR: itemError
@@ -6944,6 +7995,57 @@ function signature:
     tag: 'span',
     name: 'assistant'
   });
+
+  var toCamels = function toCamels(string) {
+    var separator =
+      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '-';
+    return string.replace(new RegExp(separator + '.', 'g'), function(sub) {
+      return sub.charAt(1).toUpperCase();
+    });
+  };
+
+  var debounce = function debounce(func) {
+    var interval =
+      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
+    var immidiateOnly =
+      arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+    var last = Date.now();
+    var timeout = null;
+
+    return function() {
+      for (
+        var _len = arguments.length, args = Array(_len), _key = 0;
+        _key < _len;
+        _key++
+      ) {
+        args[_key] = arguments[_key];
+      }
+
+      clearTimeout(timeout);
+
+      var dist = Date.now() - last;
+
+      var fn = function fn() {
+        last = Date.now();
+        func.apply(undefined, args);
+      };
+
+      if (dist < interval) {
+        // we need to delay by the difference between interval and dist
+        // for example: if distance is 10 ms and interval is 16 ms,
+        // we need to wait an additional 6ms before calling the function)
+        if (!immidiateOnly) {
+          timeout = setTimeout(fn, interval - dist);
+        }
+      } else {
+        // go!
+        fn();
+      }
+    };
+  };
+
+  var MAX_FILES_LIMIT = 1000000;
 
   var create$1 = function create(_ref) {
     var root = _ref.root,
@@ -6965,7 +8067,13 @@ function signature:
 
     // Field label
     root.ref.label = root.appendChildView(
-      root.createChildView(dropLabel, _extends({}, props, { translateY: null }))
+      root.createChildView(
+        dropLabel,
+        Object.assign({}, props, {
+          translateY: null,
+          caption: root.query('GET_LABEL_IDLE')
+        })
+      )
     );
 
     // List of items
@@ -6980,7 +8088,7 @@ function signature:
 
     // Assistant notifies assistive tech when content changes
     root.ref.assistant = root.appendChildView(
-      root.createChildView(assistant, _extends({}, props))
+      root.createChildView(assistant, Object.assign({}, props))
     );
 
     // Measure (tests if fixed height was set)
@@ -6988,15 +8096,72 @@ function signature:
     root.ref.measure = createElement$1('div');
     root.ref.measure.style.height = '100%';
     root.element.appendChild(root.ref.measure);
+
+    // information on the root height or fixed height status
+    root.ref.bounds = null;
+
+    // apply initial style properties
+    root
+      .query('GET_STYLES')
+      .filter(function(style) {
+        return !isEmpty(style.value);
+      })
+      .map(function(_ref2) {
+        var name = _ref2.name,
+          value = _ref2.value;
+
+        root.element.dataset[name] = value;
+      });
+
+    // determine if width changed
+    root.ref.widthPrevious = null;
+    root.ref.widthUpdated = debounce(function() {
+      root.dispatch('DID_RESIZE_ROOT');
+    }, 250);
+
+    //
+    root.ref.updateHistory = [];
   };
 
-  var write = function write(_ref2) {
-    var root = _ref2.root,
-      props = _ref2.props,
-      actions = _ref2.actions;
+  var write = function write(_ref3) {
+    var root = _ref3.root,
+      props = _ref3.props,
+      actions = _ref3.actions;
+
+    if (root.rect.element.width !== root.ref.widthPrevious) {
+      root.ref.widthPrevious = root.rect.element.width;
+      root.ref.widthUpdated();
+    }
+
+    // get box bounds, we do this only once
+    var bounds = root.ref.bounds;
+    if (!bounds) {
+      bounds = root.ref.bounds = calculateRootBoundingBoxHeight(root);
+
+      // destroy measure element
+      root.element.removeChild(root.ref.measure);
+      root.ref.measure = null;
+    }
 
     // route actions
     route({ root: root, props: props, actions: actions });
+
+    // apply style properties
+    actions
+      .filter(function(action) {
+        return /^DID_SET_STYLE_/.test(action.type);
+      })
+      .filter(function(action) {
+        return !isEmpty(action.data.value);
+      })
+      .map(function(_ref4) {
+        var type = _ref4.type,
+          data = _ref4.data;
+
+        var name = toCamels(type.substr(8).toLowerCase(), '_');
+        root.element.dataset[name] = data.value;
+        root.invalidateLayout();
+      });
 
     // get quick references to various high level parts of the upload tool
     var _root$ref = root.ref,
@@ -7005,29 +8170,27 @@ function signature:
       list = _root$ref.list,
       panel$$1 = _root$ref.panel;
 
-    // bool to indicate if we're full or not
+    // sets correct state to hopper scope
 
+    if (hopper) {
+      hopper.updateHopperState();
+    }
+
+    // bool to indicate if we're full or not
+    var aspectRatio = root.query('GET_PANEL_ASPECT_RATIO');
     var isMultiItem = root.query('GET_ALLOW_MULTIPLE');
     var totalItems = root.query('GET_TOTAL_ITEMS');
-    var maxItems = root.query('GET_MAX_FILES');
-    var atMaxCapacity = isMultiItem
-      ? totalItems === maxItems
-      : totalItems === 1;
-
-    // views not used in height calculation
-    var childrenUsedForBoundingCalculation = [].concat(
-      toConsumableArray(list.childViews[0].childViews)
-    );
-
-    // views used to calculate the visual height of the container (which is passed to panel)
-    var childrenUsedForVisualHeightCalculation = [list];
+    var maxItems = isMultiItem
+      ? root.query('GET_MAX_FILES') || MAX_FILES_LIMIT
+      : 1;
+    var atMaxCapacity = totalItems === maxItems;
 
     // action used to add item
     var addAction = actions.find(function(action) {
       return action.type === 'DID_ADD_ITEM';
     });
 
-    // if at max capacity hide the label
+    // if reached max capacity and we've just reached it
     if (atMaxCapacity && addAction) {
       // get interaction type
       var interactionMethod = addAction.data.interactionMethod;
@@ -7035,203 +8198,304 @@ function signature:
       // hide label
       label.opacity = 0;
 
-      // if is multi-item, the label is always moved upwards
       if (isMultiItem) {
-        label.translateY = -label.rect.element.height;
+        label.translateY = -40;
       } else {
-        // based on interaction method we move label in different directions
         if (interactionMethod === InteractionMethod.API) {
           label.translateX = 40;
         } else if (interactionMethod === InteractionMethod.BROWSE) {
           label.translateY = 40;
         } else {
-          label.translateY = -40;
+          label.translateY = 30;
         }
       }
     } else if (!atMaxCapacity) {
-      // reveal label
       label.opacity = 1;
-      label.translateY = root.rect.element.paddingTop;
       label.translateX = 0;
-
-      // we use label for bounding box
-      childrenUsedForVisualHeightCalculation.push(label);
-      childrenUsedForBoundingCalculation.push(label);
+      label.translateY = 0;
     }
 
-    // sets correct state to hopper scope
-    if (hopper) {
-      hopper.updateHopperState();
-    }
+    var listItemMargin = calculateListItemMargin(root);
 
-    // need a label to do anything
-    if (!label.caption) {
-      return;
-    }
+    var listHeight = calculateListHeight(root);
 
-    // link list to label bottom position (including bottom margin)
-    list.translateY = isMultiItem
-      ? label.rect.outer.bottom
-      : root.rect.element.paddingTop;
+    var labelHeight = label.rect.element.height;
+    var currentLabelHeight = !isMultiItem || atMaxCapacity ? 0 : labelHeight;
 
-    // update bounding box if has changed
-    var boxBounding = calculateRootBoundingBoxHeight(root, props);
-    var childrenBoundingHeight = calculateChildrenBoundingBoxHeight(
-      childrenUsedForBoundingCalculation
-    );
-    var visualHeight = calculateChildrenVisualHeight(
-      childrenUsedForVisualHeightCalculation
-    );
-    var bottomPadding = totalItems > 0 ? root.rect.element.paddingTop * 0.5 : 0;
+    var listMarginTop = atMaxCapacity ? list.rect.element.marginTop : 0;
+    var listMarginBottom =
+      totalItems === 0 ? 0 : list.rect.element.marginBottom;
 
-    if (boxBounding.fixedHeight) {
+    var visualHeight =
+      currentLabelHeight + listMarginTop + listHeight.visual + listMarginBottom;
+    var boundsHeight =
+      currentLabelHeight + listMarginTop + listHeight.bounds + listMarginBottom;
+
+    // link list to label bottom position
+    list.translateY =
+      Math.max(0, currentLabelHeight - list.rect.element.marginTop) -
+      listItemMargin.top;
+
+    if (aspectRatio) {
+      // fixed aspect ratio
+
+      // calculate height based on width
+      var width = root.rect.element.width;
+      var height = width * aspectRatio;
+
+      // remember this width
+      var history = root.ref.updateHistory;
+      history.push(width);
+
+      var MAX_BOUNCES = 2;
+      if (history.length > MAX_BOUNCES * 2) {
+        var l = history.length;
+        var bottom = l - 10;
+        var bounces = 0;
+        for (var i = l; i >= bottom; i--) {
+          if (history[i] === history[i - 2]) {
+            bounces++;
+          }
+
+          if (bounces >= MAX_BOUNCES) {
+            // dont adjust height
+            return;
+          }
+        }
+      }
+
+      // fix height of panel so it adheres to aspect ratio
+      panel$$1.scalable = false;
+      panel$$1.height = height;
+
+      // available height for list
+      var listAvailableHeight =
+        // the height of the panel minus the label height
+        height -
+        currentLabelHeight -
+        // the room we leave open between the end of the list and the panel bottom
+        (listMarginBottom - listItemMargin.bottom) -
+        // if we're full we need to leave some room between the top of the panel and the list
+        (atMaxCapacity ? listMarginTop : 0);
+
+      if (listHeight.visual > listAvailableHeight) {
+        list.overflow = listAvailableHeight;
+      } else {
+        list.overflow = null;
+      }
+
+      // set container bounds (so pushes siblings downwards)
+      root.height = height;
+    } else if (bounds.fixedHeight) {
       // fixed height
 
-      // fixed height panel
+      // fix height of panel
       panel$$1.scalable = false;
 
-      // link panel height to box bounding
-      panel$$1.height = boxBounding.fixedHeight + root.rect.element.paddingTop;
+      // available height for list
+      var _listAvailableHeight =
+        // the height of the panel minus the label height
+        bounds.fixedHeight -
+        currentLabelHeight -
+        // the room we leave open between the end of the list and the panel bottom
+        (listMarginBottom - listItemMargin.bottom) -
+        // if we're full we need to leave some room between the top of the panel and the list
+        (atMaxCapacity ? listMarginTop : 0);
 
-      // set overflow
-      list.overflow =
-        childrenBoundingHeight > panel$$1.height && isMultiItem
-          ? panel$$1.height
-          : null;
-    } else if (boxBounding.cappedHeight) {
+      // set list height
+      if (listHeight.visual > _listAvailableHeight) {
+        list.overflow = _listAvailableHeight;
+      } else {
+        list.overflow = null;
+      }
+
+      // no need to set container bounds as these are handles by CSS fixed height
+    } else if (bounds.cappedHeight) {
       // max-height
 
       // not a fixed height panel
+      var isCappedHeight = visualHeight >= bounds.cappedHeight;
+      var panelHeight = Math.min(bounds.cappedHeight, visualHeight);
       panel$$1.scalable = true;
+      panel$$1.height = isCappedHeight
+        ? panelHeight
+        : panelHeight - listItemMargin.top - listItemMargin.bottom;
 
-      // limit children bounding height to the set capped height
-      var cappedChildrenBoundingHeight = Math.min(
-        boxBounding.cappedHeight,
-        childrenBoundingHeight
+      // available height for list
+      var _listAvailableHeight2 =
+        // the height of the panel minus the label height
+        panelHeight -
+        currentLabelHeight -
+        // the room we leave open between the end of the list and the panel bottom
+        (listMarginBottom - listItemMargin.bottom) -
+        // if we're full we need to leave some room between the top of the panel and the list
+        (atMaxCapacity ? listMarginTop : 0);
+
+      // set list height (if is overflowing)
+      if (
+        visualHeight > bounds.cappedHeight &&
+        listHeight.visual > _listAvailableHeight2
+      ) {
+        list.overflow = _listAvailableHeight2;
+      } else {
+        list.overflow = null;
+      }
+
+      // set container bounds (so pushes siblings downwards)
+      root.height = Math.min(
+        bounds.cappedHeight,
+        boundsHeight - listItemMargin.top - listItemMargin.bottom
       );
-
-      // update root height
-      root.height = cappedChildrenBoundingHeight + bottomPadding;
-
-      // set visual height
-      panel$$1.height = Math.min(
-        boxBounding.cappedHeight + root.rect.element.paddingTop,
-        visualHeight + bottomPadding
-      );
-
-      // if can overflow, test if is currently overflowing
-      list.overflow =
-        childrenBoundingHeight > panel$$1.height && isMultiItem
-          ? panel$$1.height
-          : null;
     } else {
       // flexible height
 
       // not a fixed height panel
+      var itemMargin =
+        totalItems > 0 ? listItemMargin.top + listItemMargin.bottom : 0;
       panel$$1.scalable = true;
+      panel$$1.height = Math.max(labelHeight, visualHeight - itemMargin);
 
-      // set to new bounding
-      root.height =
-        childrenBoundingHeight + bottomPadding + root.rect.element.paddingTop;
-
-      // set height to new visual height
-      panel$$1.height = visualHeight + bottomPadding;
+      // set container bounds (so pushes siblings downwards)
+      root.height = Math.max(labelHeight, boundsHeight - itemMargin);
     }
   };
 
-  var calculateChildrenVisualHeight = function calculateChildrenVisualHeight(
-    children
-  ) {
-    return (
-      children
+  var calculateListItemMargin = function calculateListItemMargin(root) {
+    var item = root.ref.list.childViews[0].childViews[0];
+    return item
+      ? {
+          top: item.rect.element.marginTop,
+          bottom: item.rect.element.marginBottom
+        }
+      : {
+          top: 0,
+          bottom: 0
+        };
+  };
 
-        // calculate the total height occupied by all children
-        .reduce(function(max, child) {
-          var bottom = child.rect.outer.bottom;
+  var calculateListHeight = function calculateListHeight(root) {
+    var visual = 0;
+    var bounds = 0;
 
-          if (bottom > max) {
-            max = bottom;
-          }
+    // get file list reference
+    var scrollList = root.ref.list;
+    var itemList = scrollList.childViews[0];
+    var children = itemList.childViews;
 
-          return max;
-        }, 0)
+    // no children, done!
+    if (children.length === 0) return { visual: visual, bounds: bounds };
+
+    var horizontalSpace = itemList.rect.element.width;
+    var dragIndex = getItemIndexByPosition(
+      itemList,
+      scrollList.dragCoordinates
     );
+
+    var childRect = children[0].rect.element;
+
+    var itemVerticalMargin = childRect.marginTop + childRect.marginBottom;
+    var itemHorizontalMargin = childRect.marginLeft + childRect.marginRight;
+
+    var itemWidth = childRect.width + itemHorizontalMargin;
+    var itemHeight = childRect.height + itemVerticalMargin;
+
+    var newItem = typeof dragIndex !== 'undefined' && dragIndex >= 0 ? 1 : 0;
+    var removedItem = children.find(function(child) {
+      return child.markedForRemoval && child.opacity < 0.45;
+    })
+      ? -1
+      : 0;
+    var verticalItemCount = children.length + newItem + removedItem;
+    var itemsPerRow = Math.round(horizontalSpace / itemWidth);
+
+    // stack
+    if (itemsPerRow === 1) {
+      children.forEach(function(item) {
+        var height = item.rect.element.height + itemVerticalMargin;
+        bounds += height;
+        visual += height * item.opacity;
+      });
+    } else {
+      // grid
+      bounds = Math.ceil(verticalItemCount / itemsPerRow) * itemHeight;
+      visual = bounds;
+    }
+
+    return { visual: visual, bounds: bounds };
   };
 
   var calculateRootBoundingBoxHeight = function calculateRootBoundingBoxHeight(
-    root,
-    props
+    root
   ) {
-    // only calculate first time
-    if (props.boxBounding) {
-      return props.boxBounding;
-    }
-
     var height = root.ref.measureHeight || null;
     var cappedHeight = parseInt(root.style.maxHeight, 10) || null;
     var fixedHeight = height === 0 ? null : height;
 
-    props.boxBounding = {
+    return {
       cappedHeight: cappedHeight,
       fixedHeight: fixedHeight
     };
-
-    // destroy measure element
-    root.element.removeChild(root.ref.measure);
-    root.ref.measure = null;
-
-    // done!
-    return props.boxBounding;
   };
 
-  var calculateChildrenBoundingBoxHeight = function calculateChildrenBoundingBoxHeight(
-    children
-  ) {
-    return (
-      children
+  var exceedsMaxFiles = function exceedsMaxFiles(root, items) {
+    var allowReplace = root.query('GET_ALLOW_REPLACE');
+    var allowMultiple = root.query('GET_ALLOW_MULTIPLE');
+    var totalItems = root.query('GET_TOTAL_ITEMS');
+    var maxItems = root.query('GET_MAX_FILES');
 
-        // no use of outer and inner as that includes translations
-        .reduce(function(height, child) {
-          return (
-            height + child.rect.inner.bottom + child.rect.element.marginBottom
-          );
-        }, 0)
-    );
+    // total amount of items being dragged
+    var totalBrowseItems = items.length;
+
+    // if does not allow multiple items and dragging more than one item
+    if (!allowMultiple && totalBrowseItems > 1) {
+      return true;
+    }
+
+    // limit max items to one if not allowed to drop multiple items
+    maxItems = allowMultiple ? maxItems : allowReplace ? maxItems : 1;
+
+    // no more room?
+    var hasMaxItems = isInt(maxItems);
+    if (hasMaxItems && totalItems + totalBrowseItems > maxItems) {
+      root.dispatch('DID_THROW_MAX_FILES', {
+        source: items,
+        error: createResponse('warning', 0, 'Max files')
+      });
+      return true;
+    }
+
+    return false;
   };
 
-  var toggleAllowDrop = function toggleAllowDrop(_ref3) {
-    var root = _ref3.root,
-      props = _ref3.props,
-      action = _ref3.action;
+  var getDragIndex = function getDragIndex(list, position) {
+    var itemList = list.childViews[0];
+    return getItemIndexByPosition(itemList, {
+      left: position.scopeLeft - itemList.rect.element.left,
+      top:
+        position.scopeTop -
+        (list.rect.outer.top +
+          list.rect.element.marginTop +
+          list.rect.element.scrollTop)
+    });
+  };
+
+  /**
+   * Enable or disable file drop functionality
+   */
+  var toggleAllowDrop = function toggleAllowDrop(_ref5) {
+    var root = _ref5.root,
+      props = _ref5.props,
+      action = _ref5.action;
 
     if (action.value && !root.ref.hopper) {
       var hopper = createHopper(
         root.element,
         function(items) {
-          var allowReplace = root.query('GET_ALLOW_REPLACE');
-          var allowMultiple = root.query('GET_ALLOW_MULTIPLE');
-          var totalItems = root.query('GET_TOTAL_ITEMS');
-          var dropValidation = root.query('GET_DROP_VALIDATION');
-          var maxItems = root.query('GET_MAX_TOTAL_ITEMS');
-
-          // total amount of items being dragged
-          var totalDragItems = items.length;
-
-          // if does not allow multiple items and dragging more than one item
-          if (!allowMultiple && totalDragItems > 1) {
-            return false;
-          }
-
-          // limit max items to one if not allowed to drop multiple items
-          maxItems = allowMultiple ? maxItems : allowReplace ? maxItems : 1;
-
-          // no more room?
-          var hasMaxItems = isInt(maxItems);
-          if (hasMaxItems && totalItems + totalDragItems > maxItems) {
-            return false;
-          }
+          // these files don't fit so stop here
+          if (exceedsMaxFiles(root, items)) return false;
 
           // all items should be validated by all filters as valid
+          var dropValidation = root.query('GET_DROP_VALIDATION');
           return dropValidation
             ? items.every(function(item) {
                 return applyFilters('ALLOW_HOPPER_ITEM', item, {
@@ -7249,21 +8513,10 @@ function signature:
       );
 
       hopper.onload = function(items, position) {
-        var itemList = root.ref.list.childViews[0];
-        var index = getItemIndexByPosition(itemList, {
-          left: position.scopeLeft,
-          top:
-            position.scopeTop -
-            root.ref.list.rect.outer.top +
-            root.ref.list.element.scrollTop
-        });
-
-        forEachDelayed(items, function(source) {
-          root.dispatch('ADD_ITEM', {
-            interactionMethod: InteractionMethod.DROP,
-            source: source,
-            index: index
-          });
+        root.dispatch('ADD_ITEMS', {
+          items: items,
+          index: getDragIndex(root.ref.list, position),
+          interactionMethod: InteractionMethod.DROP
         });
 
         root.dispatch('DID_DROP', { position: position });
@@ -7296,23 +8549,25 @@ function signature:
   /**
    * Enable or disable browse functionality
    */
-  var toggleAllowBrowse = function toggleAllowBrowse(_ref4) {
-    var root = _ref4.root,
-      props = _ref4.props,
-      action = _ref4.action;
+  var toggleAllowBrowse = function toggleAllowBrowse(_ref6) {
+    var root = _ref6.root,
+      props = _ref6.props,
+      action = _ref6.action;
 
     if (action.value) {
       root.ref.browser = root.appendChildView(
         root.createChildView(
           browser,
-          _extends({}, props, {
+          Object.assign({}, props, {
             onload: function onload(items) {
-              forEachDelayed(items, function(source) {
-                root.dispatch('ADD_ITEM', {
-                  interactionMethod: InteractionMethod.BROWSE,
-                  source: source,
-                  index: 0
-                });
+              // these files don't fit so stop here
+              if (exceedsMaxFiles(root, items)) return false;
+
+              // add items!
+              root.dispatch('ADD_ITEMS', {
+                items: items,
+                index: -1,
+                interactionMethod: InteractionMethod.BROWSE
               });
             }
           })
@@ -7327,19 +8582,17 @@ function signature:
   /**
    * Enable or disable paste functionality
    */
-  var toggleAllowPaste = function toggleAllowPaste(_ref5) {
-    var root = _ref5.root,
-      action = _ref5.action;
+  var toggleAllowPaste = function toggleAllowPaste(_ref7) {
+    var root = _ref7.root,
+      action = _ref7.action;
 
     if (action.value) {
       root.ref.paster = createPaster();
       root.ref.paster.onload = function(items) {
-        forEachDelayed(items, function(source) {
-          root.dispatch('ADD_ITEM', {
-            interactionMethod: InteractionMethod.PASTE,
-            source: source,
-            index: 0
-          });
+        root.dispatch('ADD_ITEMS', {
+          items: items,
+          index: getDragIndex(root.ref.list, position),
+          interactionMethod: InteractionMethod.PASTE
         });
       };
     } else if (root.ref.paster) {
@@ -7359,8 +8612,8 @@ function signature:
 
   var root = createView({
     name: 'root',
-    read: function read(_ref6) {
-      var root = _ref6.root;
+    read: function read(_ref8) {
+      var root = _ref8.root;
 
       if (root.ref.measure) {
         root.ref.measureHeight = root.ref.measure.offsetHeight;
@@ -7368,8 +8621,8 @@ function signature:
     },
     create: create$1,
     write: write,
-    destroy: function destroy(_ref7) {
-      var root = _ref7.root;
+    destroy: function destroy(_ref9) {
+      var root = _ref9.root;
 
       if (root.ref.paster) {
         root.ref.paster.destroy();
@@ -7411,6 +8664,22 @@ function signature:
     // set initial options
     store.dispatch('SET_OPTIONS', { options: initialOptions });
 
+    // re-render on window resize start and finish
+    var resizing = false;
+    var timer = null;
+    var resizeHandler = function resizeHandler() {
+      if (!resizing) {
+        resizing = true;
+        store.dispatch('DID_START_RESIZE');
+      }
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        resizing = false;
+        store.dispatch('DID_STOP_RESIZE');
+      }, 500);
+    };
+    window.addEventListener('resize', resizeHandler);
+
     // render initial view
     var view = root(store, { id: getUniqueId() });
 
@@ -7419,6 +8688,7 @@ function signature:
     //
     var resting = false;
     var hidden = false;
+
     var readWriteApi = {
       // necessary for update loop
 
@@ -7453,7 +8723,7 @@ function signature:
         var actions$$1 = store
           .processActionQueue()
 
-          // filter out set actions (will trigger DID_SET)
+          // filter out set actions (these will automatically trigger DID_SET)
           .filter(function(action) {
             return !/^SET_/.test(action.type);
           });
@@ -7467,7 +8737,10 @@ function signature:
         routeActionsToEvents(actions$$1);
 
         // update the view
-        resting = view._write(ts, actions$$1);
+        resting = view._write(ts, actions$$1, resizing);
+
+        // will clean up all archived items
+        removeReleasedItems(store.query('GET_ITEMS'));
 
         // now idling
         if (resting) {
@@ -7493,11 +8766,15 @@ function signature:
 
         // copy relevant props
         if (data.hasOwnProperty('error')) {
-          event.error = data.error ? _extends({}, data.error) : null;
+          event.error = data.error ? Object.assign({}, data.error) : null;
         }
 
         if (data.status) {
-          event.status = _extends({}, data.status);
+          event.status = Object.assign({}, data.status);
+        }
+
+        if (data.file) {
+          event.output = data.file;
         }
 
         // only source is available, else add item if possible
@@ -7506,6 +8783,11 @@ function signature:
         } else if (data.item || data.id) {
           var item = data.item ? data.item : store.query('GET_ITEM', data.id);
           event.file = item ? createItemAPI(item) : null;
+        }
+
+        // map all items in a possible items array
+        if (data.items) {
+          event.items = data.items.map(createItemAPI);
         }
 
         // if this is a progress event add the progress amount
@@ -7532,6 +8814,8 @@ function signature:
 
       DID_THROW_ITEM_LOAD_ERROR: [createEvent('error'), createEvent('addfile')],
 
+      DID_PREPARE_OUTPUT: createEvent('preparefile'),
+
       DID_START_ITEM_PROCESSING: createEvent('processfilestart'),
       DID_UPDATE_ITEM_PROCESS_PROGRESS: createEvent('processfileprogress'),
       DID_ABORT_ITEM_PROCESSING: createEvent('processfileabort'),
@@ -7543,12 +8827,14 @@ function signature:
         createEvent('processfile')
       ],
 
-      SPLICE_ITEM: createEvent('removefile')
+      DID_REMOVE_ITEM: createEvent('removefile'),
+
+      DID_UPDATE_ITEMS: createEvent('updatefiles')
     };
 
     var exposeEvent = function exposeEvent(event) {
       // create event object to be dispatched
-      var detail = _extends({ pond: exports }, event);
+      var detail = Object.assign({ pond: exports }, event);
       delete detail.type;
       view.element.dispatchEvent(
         new CustomEvent('FilePond:' + event.type, {
@@ -7574,7 +8860,7 @@ function signature:
         params.push(event.file);
       }
 
-      // append otherp props
+      // append other props
       var filtered = ['type', 'error', 'file'];
       Object.keys(event)
         .filter(function(key) {
@@ -7620,7 +8906,7 @@ function signature:
     };
 
     var getFile = function getFile(query) {
-      return store.query('GET_ITEM', query);
+      return store.query('GET_ACTIVE_ITEM', query);
     };
 
     var addFile = function addFile(source) {
@@ -7632,7 +8918,8 @@ function signature:
           source: source,
           index: options.index,
           success: resolve,
-          failure: reject
+          failure: reject,
+          options: options
         });
       });
     };
@@ -7642,7 +8929,7 @@ function signature:
       store.dispatch('REMOVE_ITEM', { query: query });
 
       // see if item has been removed
-      return store.query('GET_ITEM', query) === null;
+      return store.query('GET_ACTIVE_ITEM', query) === null;
     };
 
     var addFiles = function addFiles() {
@@ -7678,29 +8965,30 @@ function signature:
           sources.push.apply(sources, args);
         }
 
-        var sourcePromises = [];
-        var delayPromises = forEachDelayed(sources, function(source) {
-          sourcePromises.push(addFile(source, options));
-        });
-
-        Promise.all(delayPromises).then(function() {
-          Promise.all(sourcePromises).then(function(results) {
-            resolve(results);
-          });
+        store.dispatch('ADD_ITEMS', {
+          items: sources,
+          index: options.index,
+          interactionMethod: InteractionMethod.API,
+          success: resolve,
+          failure: reject
         });
       });
     };
 
     var getFiles = function getFiles() {
-      return store.query('GET_ITEMS');
+      return store.query('GET_ACTIVE_ITEMS');
     };
 
     var processFile = function processFile(query) {
       return new Promise(function(resolve, reject) {
-        store.dispatch('PROCESS_ITEM', {
+        store.dispatch('REQUEST_ITEM_PROCESSING', {
           query: query,
-          success: resolve,
-          failure: reject
+          success: function success(item) {
+            resolve(item);
+          },
+          failure: function failure(error) {
+            reject(error);
+          }
         });
       });
     };
@@ -7716,7 +9004,14 @@ function signature:
 
       var queries$$1 = Array.isArray(args[0]) ? args[0] : args;
       if (!queries$$1.length) {
-        return Promise.all(getFiles().map(processFile));
+        var files = getFiles().filter(function(item) {
+          return (
+            item.status !== ItemStatus.PROCESSING &&
+            item.status !== ItemStatus.PROCESSING_COMPLETE &&
+            item.status !== ItemStatus.PROCESSING_REVERT_ERROR
+          );
+        });
+        return Promise.all(files.map(processFile));
       }
       return Promise.all(queries$$1.map(processFile));
     };
@@ -7751,7 +9046,7 @@ function signature:
       return mappedQueries.map(removeFile);
     };
 
-    var exports = _extends(
+    var exports = Object.assign(
       {},
       on(),
       readWriteApi,
@@ -7811,6 +9106,13 @@ function signature:
         removeFiles: removeFiles,
 
         /**
+         * Sort list of files
+         */
+        sort: function sort(compare) {
+          return store.dispatch('SORT', { compare: compare });
+        },
+
+        /**
          * Browse the file system for a file
          */
         browse: function browse() {
@@ -7834,6 +9136,9 @@ function signature:
 
           // destroy view
           view._destroy();
+
+          // stop listening to resize
+          window.removeEventListener('resize', resizeHandler);
 
           // dispatch destroy
           store.dispatch('DID_DESTROY');
@@ -7929,18 +9234,10 @@ function signature:
     });
 
     // set app options
-    var app = createApp$1(_extends({}, defaultOptions$$1, customOptions));
+    var app = createApp$1(Object.assign({}, defaultOptions$$1, customOptions));
 
     // return the plugin instance
     return app;
-  };
-
-  var toCamels = function toCamels(string) {
-    var separator =
-      arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '-';
-    return string.replace(new RegExp(separator + '.', 'g'), function(sub) {
-      return sub.charAt(1).toUpperCase();
-    });
   };
 
   var lowerCaseFirstLetter = function lowerCaseFirstLetter(string) {
@@ -8005,13 +9302,20 @@ function signature:
       arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     // turn attributes into object
-    var output = []
-      .concat(toConsumableArray(node.attributes))
+    var attributes = [];
+    forin(node.attributes, function(index) {
+      attributes.push(node.attributes[index]);
+    });
+
+    var output = attributes
+      .filter(function(attribute) {
+        return attribute.name;
+      })
       .reduce(function(obj, attribute) {
-        obj[attributeNameToPropertyName(attribute.name)] = attr(
-          node,
-          attribute.name
-        );
+        var value = attr(node, attribute.name);
+
+        obj[attributeNameToPropertyName(attribute.name)] =
+          value === attribute.name ? true : value;
         return obj;
       }, {});
 
@@ -8062,18 +9366,27 @@ function signature:
     // add additional option translators
     applyFilters('SET_ATTRIBUTE_TO_OPTION_MAP', attributeMapping);
 
-    // create final options object by extracting options from element
-    // and then overriding with options object
-    var mergedOptions = _extends(
-      {},
-      getAttributesAsObject(
-        element.nodeName === 'FIELDSET'
-          ? element.querySelector('input[type=file]')
-          : element,
-        attributeMapping
-      ),
-      options
+    // create final options object by setting options object and then overriding options supplied on element
+    var mergedOptions = Object.assign({}, options);
+
+    var attributeOptions = getAttributesAsObject(
+      element.nodeName === 'FIELDSET'
+        ? element.querySelector('input[type=file]')
+        : element,
+      attributeMapping
     );
+
+    // merge with options object
+    Object.keys(attributeOptions).forEach(function(key) {
+      if (isObject(attributeOptions[key])) {
+        if (!isObject(mergedOptions[key])) {
+          mergedOptions[key] = {};
+        }
+        Object.assign(mergedOptions[key], attributeOptions[key]);
+      } else {
+        mergedOptions[key] = attributeOptions[key];
+      }
+    });
 
     // if parent is a fieldset, get files from parent by selecting all input fields that are not file upload fields
     // these will then be automatically set to the initial files
@@ -8114,12 +9427,12 @@ function signature:
     return createAppAtElement.apply(undefined, arguments);
   };
 
-  var PRIVATE_METHODS$1 = ['fire', '_read', '_write'];
+  var PRIVATE_METHODS = ['fire', '_read', '_write'];
 
   var createAppAPI = function createAppAPI(app) {
     var api = {};
 
-    copyObjectPropertiesToObject(app, api, PRIVATE_METHODS$1);
+    copyObjectPropertiesToObject(app, api, PRIVATE_METHODS);
 
     return api;
   };
@@ -8133,32 +9446,6 @@ function signature:
     return string.replace(/(?:{([a-zA-Z]+)})/g, function(match, group) {
       return replacements[group];
     });
-  };
-
-  var images = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff'];
-  var text$1 = ['css', 'csv', 'html', 'txt'];
-  var map = {
-    zip: 'zip|compressed',
-    epub: 'application/epub+zip'
-  };
-
-  var guesstimateMimeType = function guesstimateMimeType() {
-    var extension =
-      arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-    extension = extension.toLowerCase();
-    if (images.includes(extension)) {
-      return (
-        'image/' +
-        (extension === 'jpg'
-          ? 'jpeg'
-          : extension === 'svg' ? 'svg+xml' : extension)
-      );
-    }
-    if (text$1.includes(extension)) {
-      return 'text/' + extension;
-    }
-    return map[extension] || null;
   };
 
   var createWorker = function createWorker(fn) {
@@ -8194,7 +9481,7 @@ function signature:
     };
   };
 
-  var loadImage = function loadImage(url, cb) {
+  var loadImage = function loadImage(url) {
     return new Promise(function(resolve, reject) {
       var img = new Image();
       img.onload = function() {
@@ -8207,15 +9494,17 @@ function signature:
     });
   };
 
+  var renameFile = function renameFile(file, name) {
+    var renamedFile = file.slice(0, file.size, file.type);
+    renamedFile.lastModifiedDate = file.lastModifiedDate;
+    renamedFile.name = name;
+    return renamedFile;
+  };
+
   var copyFile = function copyFile(file) {
     return renameFile(file, file.name);
   };
 
-  var isFile = function isFile(value) {
-    return value instanceof File || (value instanceof Blob && value.name);
-  };
-
-  // utilities exposed to plugins
   // already registered plugins (can't register twice)
   var registeredPlugins = [];
 
@@ -8247,10 +9536,17 @@ function signature:
         createRoute: createRoute,
         createWorker: createWorker,
         createView: createView,
+        createItemAPI: createItemAPI,
         loadImage: loadImage,
         copyFile: copyFile,
         renameFile: renameFile,
-        applyFilterChain: applyFilterChain
+        createBlob: createBlob,
+        applyFilterChain: applyFilterChain,
+        text: text,
+        getNumericAspectRatioFromString: getNumericAspectRatioFromString
+      },
+      views: {
+        fileActionButton: fileActionButton
       }
     });
 
@@ -8258,132 +9554,7 @@ function signature:
     extendDefaultOptions(pluginOutline.options);
   };
 
-  /**
-   * Plugin internal state (over all instances)
-   */
-  var state = {
-    // active app instances, used to redraw the apps and to find the later
-    apps: []
-  };
-
-  // plugin name
-  var name = 'filepond';
-
-  // is in browser
-  var hasNavigator = typeof navigator !== 'undefined';
-
-  // app painter, cannot be paused or stopped at the moment
-  var painter =
-    hasNavigator &&
-    createPainter(createUpdater(state.apps, '_read', '_write'), 60);
-
-  // fire load event
-  if (hasNavigator) {
-    // fire loaded event so we know when FilePond is available
-    var dispatch = function dispatch() {
-      // let others know we have area ready
-      document.dispatchEvent(
-        new CustomEvent('FilePond:loaded', {
-          detail: {
-            supported: supported,
-            create: create,
-            destroy: destroy,
-            parse: parse,
-            find: find,
-            registerPlugin: registerPlugin,
-            setOptions: setOptions$$1
-          }
-        })
-      );
-
-      // clean up event
-      document.removeEventListener('DOMContentLoaded', dispatch);
-    };
-
-    if (document.readyState !== 'loading') {
-      // move to back of execution queue, FilePond should have been exported by then
-      setTimeout(function() {
-        return dispatch();
-      }, 0);
-    } else {
-      document.addEventListener('DOMContentLoaded', dispatch);
-    }
-  }
-
-  // updates the OptionTypes object based on the current options
-  var updateOptionTypes = function updateOptionTypes() {
-    return forin(getOptions$1(), function(key, value) {
-      OptionTypes[key] = value[1];
-    });
-  };
-
-  /**
-   * Public Plugin methods
-   */
-  var FileStatus = _extends({}, ItemStatus);
-
-  var OptionTypes = {};
-  updateOptionTypes();
-
-  // create method, creates apps and adds them to the app array
-  var create = function create() {
-    var app = createApp.apply(undefined, arguments);
-    app.on('destroy', destroy);
-    state.apps.push(app);
-    return createAppAPI(app);
-  };
-
-  // destroys apps and removes them from the app array
-  var destroy = function destroy(hook) {
-    // returns true if the app was destroyed successfully
-    var indexToRemove = state.apps.findIndex(function(app) {
-      return app.isAttachedTo(hook);
-    });
-    if (indexToRemove >= 0) {
-      // remove from apps
-      var app = state.apps.splice(indexToRemove, 1)[0];
-
-      // restore original dom element
-      app.restoreElement();
-
-      return true;
-    }
-
-    return false;
-  };
-
-  // parses the given context for plugins (does not include the context element itself)
-  var parse = function parse(context) {
-    // get all possible hooks
-    var matchedHooks = [].concat(
-      toConsumableArray(context.querySelectorAll('.' + name))
-    );
-
-    // filter out already active hooks
-    var newHooks = matchedHooks.filter(function(newHook) {
-      return !state.apps.find(function(app) {
-        return app.isAttachedTo(newHook);
-      });
-    });
-
-    // create new instance for each hook
-    return newHooks.map(function(hook) {
-      return create(hook);
-    });
-  };
-
-  // returns an app based on the given element hook
-  var find = function find(hook) {
-    var app = state.apps.find(function(app) {
-      return app.isAttachedTo(hook);
-    });
-    if (!app) {
-      return null;
-    }
-    return createAppAPI(app);
-  };
-
-  // returns true if plugin is supported
+  // feature detection used by supported() method
   var isOperaMini = function isOperaMini() {
     return (
       Object.prototype.toString.call(window.operamini) === '[object OperaMini]'
@@ -8404,72 +9575,216 @@ function signature:
   var hasTiming = function hasTiming() {
     return 'performance' in window;
   }; // iOS 8.x
-
-  var supported = function supported() {
-    if (!hasNavigator) {
-      return false;
-    }
-    return !(
-      isOperaMini() ||
-      !hasVisibility() ||
-      !hasPromises() ||
-      !hasBlobSlice() ||
-      !hasCreateObjectURL() ||
-      !hasTiming()
+  var isBrowser = function isBrowser() {
+    return (
+      typeof window !== 'undefined' && typeof window.document !== 'undefined'
     );
   };
 
-  // adds a plugin extension
-  var registerPlugin = function registerPlugin() {
-    for (
-      var _len = arguments.length, plugins = Array(_len), _key = 0;
-      _key < _len;
-      _key++
-    ) {
-      plugins[_key] = arguments[_key];
+  var supported = (function() {
+    // Runs immidiately and then remembers result for subsequent calls
+    var isSupported =
+      // Has to be a browser
+      isBrowser() &&
+      // Can't run on Opera Mini due to lack of everything
+      !isOperaMini() &&
+      // Require these APIs to feature detect a modern browser
+      hasVisibility() &&
+      hasPromises() &&
+      hasBlobSlice() &&
+      hasCreateObjectURL() &&
+      hasTiming();
+
+    return function() {
+      return isSupported;
+    };
+  })();
+
+  /**
+   * Plugin internal state (over all instances)
+   */
+  var state = {
+    // active app instances, used to redraw the apps and to find the later
+    apps: []
+  };
+
+  // plugin name
+  var name = 'filepond';
+
+  /**
+   * Public Plugin methods
+   */
+  var fn = function fn() {};
+  exports.FileStatus = {};
+  exports.OptionTypes = {};
+  exports.create = fn;
+  exports.destroy = fn;
+  exports.parse = fn;
+  exports.find = fn;
+  exports.registerPlugin = fn;
+  exports.getOptions = fn;
+  exports.setOptions = fn;
+  exports.FileOrigin = {};
+
+  // if not supported, no API
+  if (supported()) {
+    // start painter and fire load event
+    createPainter(
+      function() {
+        state.apps.forEach(function(app) {
+          return app._read();
+        });
+      },
+      function(ts) {
+        state.apps.forEach(function(app) {
+          return app._write(ts);
+        });
+      }
+    );
+
+    // fire loaded event so we know when FilePond is available
+    var dispatch = function dispatch() {
+      // let others know we have area ready
+      document.dispatchEvent(
+        new CustomEvent('FilePond:loaded', {
+          detail: {
+            supported: supported,
+            create: exports.create,
+            destroy: exports.destroy,
+            parse: exports.parse,
+            find: exports.find,
+            registerPlugin: exports.registerPlugin,
+            setOptions: exports.setOptions
+          }
+        })
+      );
+
+      // clean up event
+      document.removeEventListener('DOMContentLoaded', dispatch);
+    };
+
+    if (document.readyState !== 'loading') {
+      // move to back of execution queue, FilePond should have been exported by then
+      setTimeout(function() {
+        return dispatch();
+      }, 0);
+    } else {
+      document.addEventListener('DOMContentLoaded', dispatch);
     }
 
-    // register plugins
-    plugins.forEach(createAppPlugin);
+    // updates the OptionTypes object based on the current options
+    var updateOptionTypes = function updateOptionTypes() {
+      return forin(getOptions$1(), function(key, value) {
+        exports.OptionTypes[key] = value[1];
+      });
+    };
 
-    // update OptionTypes, each plugin might have extended the default options
+    exports.FileOrigin = Object.assign({}, FileOrigin$1);
+    exports.FileStatus = Object.assign({}, ItemStatus$1);
+
+    exports.OptionTypes = {};
     updateOptionTypes();
-  };
 
-  var getOptions$$1 = function getOptions$$1() {
-    var opts = {};
-    forin(getOptions$1(), function(key, value) {
-      opts[key] = value[0];
-    });
-    return opts;
-  };
+    // create method, creates apps and adds them to the app array
+    exports.create = function create() {
+      var app = createApp.apply(undefined, arguments);
+      app.on('destroy', exports.destroy);
+      state.apps.push(app);
+      return createAppAPI(app);
+    };
 
-  var setOptions$$1 = function setOptions$$1(opts) {
-    if (isObject(opts)) {
-      // update existing plugins
-      state.apps.forEach(function(app) {
-        app.setOptions(opts);
+    // destroys apps and removes them from the app array
+    exports.destroy = function destroy(hook) {
+      // returns true if the app was destroyed successfully
+      var indexToRemove = state.apps.findIndex(function(app) {
+        return app.isAttachedTo(hook);
+      });
+      if (indexToRemove >= 0) {
+        // remove from apps
+        var app = state.apps.splice(indexToRemove, 1)[0];
+
+        // restore original dom element
+        app.restoreElement();
+
+        return true;
+      }
+
+      return false;
+    };
+
+    // parses the given context for plugins (does not include the context element itself)
+    exports.parse = function parse(context) {
+      // get all possible hooks
+      var matchedHooks = [].concat(
+        toConsumableArray(context.querySelectorAll('.' + name))
+      );
+
+      // filter out already active hooks
+      var newHooks = matchedHooks.filter(function(newHook) {
+        return !state.apps.find(function(app) {
+          return app.isAttachedTo(newHook);
+        });
       });
 
-      // override defaults
-      setOptions$1(opts);
-    }
+      // create new instance for each hook
+      return newHooks.map(function(hook) {
+        return exports.create(hook);
+      });
+    };
 
-    // return new options
-    return getOptions$$1();
-  };
+    // returns an app based on the given element hook
+    exports.find = function find(hook) {
+      var app = state.apps.find(function(app) {
+        return app.isAttachedTo(hook);
+      });
+      if (!app) {
+        return null;
+      }
+      return createAppAPI(app);
+    };
 
-  exports.FileStatus = FileStatus;
-  exports.OptionTypes = OptionTypes;
-  exports.create = create;
-  exports.destroy = destroy;
-  exports.parse = parse;
-  exports.find = find;
+    // adds a plugin extension
+    exports.registerPlugin = function registerPlugin() {
+      for (
+        var _len = arguments.length, plugins = Array(_len), _key = 0;
+        _key < _len;
+        _key++
+      ) {
+        plugins[_key] = arguments[_key];
+      }
+
+      // register plugins
+      plugins.forEach(createAppPlugin);
+
+      // update OptionTypes, each plugin might have extended the default options
+      updateOptionTypes();
+    };
+
+    exports.getOptions = function getOptions$$1() {
+      var opts = {};
+      forin(getOptions$1(), function(key, value) {
+        opts[key] = value[0];
+      });
+      return opts;
+    };
+
+    exports.setOptions = function setOptions$$1(opts) {
+      if (isObject(opts)) {
+        // update existing plugins
+        state.apps.forEach(function(app) {
+          app.setOptions(opts);
+        });
+
+        // override defaults
+        setOptions$1(opts);
+      }
+
+      // return new options
+      return exports.getOptions();
+    };
+  }
+
   exports.supported = supported;
-  exports.registerPlugin = registerPlugin;
-  exports.getOptions = getOptions$$1;
-  exports.setOptions = setOptions$$1;
-  exports.FileOrigin = FileOrigin;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 });

@@ -5,9 +5,11 @@ A JavaScript library that can upload anything you throw at it, optimizes images 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/pqina/filepond/blob/master/LICENSE)
 [![npm version](https://badge.fury.io/js/filepond.svg)](https://www.npmjs.com/package/filepond)
 [![Backlog on WIP.chat](https://img.shields.io/badge/backlog-wip.chat-yellow.svg)](https://wip.chat/products/191/pending)
-[![Donate with PayPal](https://img.shields.io/badge/donate-PayPal.me-pink.svg)](https://www.paypal.me/rikschennink/10)
+[![Support on Patreon](https://img.shields.io/badge/support-patreon-salmon.svg)](https://www.patreon.com/rikschennink)
 
 21 KB gzipped. FilePond adapters are available for **[React](https://github.com/pqina/react-filepond)**, **[Vue](https://github.com/pqina/vue-filepond)**, **[Angular](https://github.com/pqina/ngx-filepond)** and **[jQuery](https://github.com/pqina/jquery-filepond)**
+
+FilePond is maintained by **[Rik Schennink](https://twitter.com/rikschennink)**
 
 <img src="https://github.com/pqina/filepond-github-assets/blob/master/filepond-animation-01.gif?raw=true" width="370" alt=""/>
 
@@ -22,12 +24,32 @@ A JavaScript library that can upload anything you throw at it, optimizes images 
 
 [Learn more about FilePond](https://pqina.nl/filepond)
 
+
+### Browser Compatibility
+
+FilePond is compatible with a wide range of desktop and mobile browsers, the oldest explicitely supported browser is IE11, for best cross browser support add [FilePond Polyfill](https://github.com/pqina/filepond-polyfill) and [Babel polyfill](https://babeljs.io/docs/en/babel-polyfill) to your project.
+
+FilePond uses [BrowserStack](https://www.browserstack.com/) for compatibility testing.
+
+[<img src="https://github.com/pqina/filepond-github-assets/blob/master/browserstack-logo.svg" height="32" alt="BrowserStack"/>](https://www.browserstack.com/)
+
+
+### Time to learn ES6?
+
+FilePond is written in ES6. The docs also feature a lot of ES6 code examples.
+
+If you want to learn how to write modern ES6 JavaScript as well, [ES6 for Everyone by Wes Bos](http://bit.ly/es6-course) is highly recommended.
+
+
 ### Plugins
 
 *   [File encode](https://github.com/pqina/filepond-plugin-file-encode)
 *   [File rename](https://github.com/pqina/filepond-plugin-file-rename)
 *   [File size validation](https://github.com/pqina/filepond-plugin-file-validate-size)
 *   [File type validation](https://github.com/pqina/filepond-plugin-file-validate-type)
+*   [File metadata](https://github.com/pqina/filepond-plugin-file-metadata)
+*   [File poster](https://github.com/pqina/filepond-plugin-file-poster)
+*   [Image editor](https://github.com/pqina/filepond-plugin-image-edit)
 *   [Image size validation](https://github.com/pqina/filepond-plugin-image-validate-size)
 *   [Image preview](https://github.com/pqina/filepond-plugin-image-preview)
 *   [Image crop](https://github.com/pqina/filepond-plugin-image-crop)
@@ -44,9 +66,11 @@ A JavaScript library that can upload anything you throw at it, optimizes images 
 *   [Angular 1](https://github.com/johnnyasantoss/angularjs-filepond)
 *   [Ember](https://github.com/alexdiliberto/ember-filepond)
 
-### Boilerplates
+### Backend
 
 *   [PHP](https://github.com/pqina/filepond-boilerplate-php)
+*   [Django](https://github.com/ImperialCollegeLondon/django-drf-filepond) 
+
 
 ## Quick Start
 
@@ -101,6 +125,16 @@ Or get it from a CDN:
 ```
 
 [Getting started with FilePond](https://pqina.nl/filepond/docs/patterns/getting-started/)
+
+## Publications
+
+*   [Smooth file uploading with React and FilePond](https://itnext.io/uploading-files-with-react-and-filepond-f8a798308557)
+*   [5 interesting technical challenges I faced while building FilePond](https://itnext.io/filepond-frontend-trickery-a3073c934c77)
+*   [Image uploads with Laravel and FilePond](https://devdojo.com/episode/image-uploads-with-laravel-and-filepond)
+*   [Integrating FilePond with Ember](https://alexdiliberto.com/ember-filepond/latest/)
+*   [FilePond launch day post-mortem](https://pqina.nl/blog/filepond-launch-day-post-mortem)
+*   [FilePond on ProductHunt](https://www.producthunt.com/posts/filepond-js)
+
 
 ## License
 
