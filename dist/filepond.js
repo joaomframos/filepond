@@ -1472,7 +1472,7 @@
 
     var tick = function tick(ts) {
       // queue next tick
-      frame = window.requestAnimationFrame(tick);
+      frame = state.apps[0].element.ownerDocument.defaultView.requestAnimationFrame(tick);
 
       // limit fps
       if (!last) {
@@ -1502,7 +1502,7 @@
 
     return {
       pause: function pause() {
-        window.cancelAnimationFrame(frame);
+        state.apps[0].element.ownerDocument.defaultView.cancelAnimationFrame(frame);
       }
     };
   };

@@ -1201,7 +1201,7 @@ const createPainter = (read, write, fps = 60) => {
 
   const tick = ts => {
     // queue next tick
-    frame = window.requestAnimationFrame(tick);
+    frame = state.apps[0].element.ownerDocument.defaultView.requestAnimationFrame(tick);
 
     // limit fps
     if (!last) {
@@ -1227,7 +1227,7 @@ const createPainter = (read, write, fps = 60) => {
 
   return {
     pause: () => {
-      window.cancelAnimationFrame(frame);
+      state.apps[0].element.ownerDocument.defaultView.cancelAnimationFrame(frame);
     }
   };
 };
