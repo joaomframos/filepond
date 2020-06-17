@@ -1473,7 +1473,9 @@
     var tick = function tick(ts) {
       // queue next tick
       // https://helppier.atlassian.net/browse/DEV-5089
-      frame = setTimeout(tick, interval);
+      frame = setTimeout(function () {
+        tick(performance.now());
+      }, interval);
 
       // limit fps
       if (!last) {

@@ -1202,7 +1202,7 @@ const createPainter = (read, write, fps = 60) => {
   const tick = ts => {
     // queue next tick
     // https://helppier.atlassian.net/browse/DEV-5089
-    frame = setTimeout(tick, interval);
+    frame = setTimeout(() => tick(performance.now()), interval);
 
     // limit fps
     if (!last) {
