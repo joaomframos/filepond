@@ -1472,7 +1472,8 @@
 
     var tick = function tick(ts) {
       // queue next tick
-      frame = window.requestAnimationFrame(tick);
+      // https://helppier.atlassian.net/browse/DEV-5089
+      frame = setTimeout(tick, interval);
 
       // limit fps
       if (!last) {
@@ -1502,7 +1503,8 @@
 
     return {
       pause: function pause() {
-        window.cancelAnimationFrame(frame);
+        // https://helppier.atlassian.net/browse/DEV-5089
+        clearTimeout(frame);
       }
     };
   };

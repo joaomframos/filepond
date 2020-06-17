@@ -1201,7 +1201,8 @@ const createPainter = (read, write, fps = 60) => {
 
   const tick = ts => {
     // queue next tick
-    frame = window.requestAnimationFrame(tick);
+    // https://helppier.atlassian.net/browse/DEV-5089
+    frame = setTimeout(tick, interval);
 
     // limit fps
     if (!last) {
@@ -1227,7 +1228,8 @@ const createPainter = (read, write, fps = 60) => {
 
   return {
     pause: () => {
-      window.cancelAnimationFrame(frame);
+      // https://helppier.atlassian.net/browse/DEV-5089
+      clearTimeout(frame);
     }
   };
 };
